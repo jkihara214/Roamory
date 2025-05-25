@@ -10,7 +10,8 @@ return new class extends Migration
     {
         Schema::create('countries', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('name');
+            $table->string('name_ja');
+            $table->string('name_en');
             $table->string('code', 2);
             $table->string('geojson_url')->nullable();
             $table->timestamps();
