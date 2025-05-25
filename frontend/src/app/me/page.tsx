@@ -1,9 +1,26 @@
-import React from "react";
+"use client";
+import React, { useEffect } from "react";
+import Header from "@/components/Header";
+import { useAuthStore } from "@/store/auth";
+import { useRouter } from "next/navigation";
 
 export default function MePage() {
-  // ダミーユーザー情報
-  const user = { name: "テストユーザー", email: "test@example.com" };
-  const loading = false;
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const loading = useAuthStore((s) => s.loading);
+  const error = useAuthStore((s) => s.error);
+  const fetchMe = useAuthStore((s) => s.fetchMe);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchMe();
+  }, []);
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [loading, isAuthenticated, router]);
 
   const handleLogout = () => {
     // ここでログアウト処理を実装予定
@@ -11,19 +28,26 @@ export default function MePage() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow text-center">
-      <h1 className="text-2xl font-bold mb-4">ユーザー情報</h1>
-      <div className="mb-4">
-        <div className="text-lg font-semibold">{user.name}</div>
-        <div className="text-gray-600">{user.email}</div>
+    <>
+      <Header />
+      <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
+        <h1 className="text-2xl font-bold mb-4">ユーザー情報</h1>
+        {loading && <div>読み込み中...</div>}
+        {error && <div className="text-red-500 text-sm">{error}</div>}
+        {user && (
+          <div className="space-y-2">
+            <div>ユーザー名: {user.name}</div>
+            <div>メールアドレス: {user.email}</div>
+          </div>
+        )}
+        <button
+          onClick={handleLogout}
+          className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+          disabled={loading}
+        >
+          ログアウト
+        </button>
       </div>
-      <button
-        onClick={handleLogout}
-        className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
-        disabled={loading}
-      >
-        ログアウト
-      </button>
-    </div>
+    </>
   );
 }
