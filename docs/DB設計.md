@@ -34,7 +34,8 @@
 | カラム名                | 型                | 補足                                                       |
 | ----------------------- | ----------------- | ---------------------------------------------------------- |
 | id                      | bigIncrements     | 主キー                                                     |
-| name                    | string            | 国名（例：Japan）                                          |
+| name_ja                 | string            | 国名（日本語例：日本）                                     |
+| name_en                 | string            | 国名（英語例：Japan）                                      |
 | code                    | string(2)         | ISO 3166-1 alpha-2 コード（例：JP）                        |
 | geojson_url             | string (nullable) | 国境線 GeoJSON ファイルの URL（S3 など外部ストレージ想定） |
 | created_at / updated_at | timestamps        | 作成 / 更新日時                                            |
