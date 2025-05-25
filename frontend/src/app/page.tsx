@@ -1,102 +1,71 @@
-import Image from "next/image";
+import React from "react";
+import {
+  FaGlobeAsia,
+  FaMapMarkedAlt,
+  FaMagic,
+  FaCameraRetro,
+} from "react-icons/fa";
+import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-sky-100 via-yellow-50 to-orange-100 flex flex-col items-center py-12 px-4">
+      {/* ヒーローセクション */}
+      <section className="flex flex-col items-center text-center mb-12">
+        <div className="mb-4 animate-spin-slow">
+          <FaGlobeAsia className="text-6xl text-blue-500 drop-shadow" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+        <h1
+          className="text-4xl sm:text-5xl font-extrabold text-blue-800 mb-4 tracking-tight"
+          style={{ fontFamily: "Quicksand, Noto Sans JP, sans-serif" }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Roamory
+        </h1>
+        <p className="text-lg sm:text-xl text-gray-700 max-w-xl mb-6">
+          旅する、記憶を残す。
+          <br className="hidden sm:block" />
+          AIと地図で、あなたの旅の思い出をもっと鮮やかに。
+        </p>
+        <Link
+          href="/register"
+          className="inline-block px-8 py-3 rounded-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white text-lg font-bold shadow-lg transition-all duration-300 transform hover:scale-105"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+          今すぐはじめる
+        </Link>
+      </section>
+
+      {/* サービス特徴カード */}
+      <section className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl mb-16">
+        <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center text-center hover:shadow-2xl transition">
+          <FaMagic className="text-4xl text-pink-400 mb-3" />
+          <h2 className="text-xl font-bold mb-2 text-blue-800">
+            AI旅行プラン生成
+          </h2>
+          <p className="text-gray-600 text-sm">
+            国・日付・予算を入力するだけで、AIがあなただけの旅行プランを自動作成。
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center text-center hover:shadow-2xl transition">
+          <FaMapMarkedAlt className="text-4xl text-sky-400 mb-3" />
+          <h2 className="text-xl font-bold mb-2 text-blue-800">地図×日記</h2>
+          <p className="text-gray-600 text-sm">
+            世界地図にピンを立てて、旅の思い出や写真を日記として記録・可視化。
+          </p>
+        </div>
+        <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center text-center hover:shadow-2xl transition">
+          <FaCameraRetro className="text-4xl text-orange-400 mb-3" />
+          <h2 className="text-xl font-bold mb-2 text-blue-800">
+            訪問国の可視化
+          </h2>
+          <p className="text-gray-600 text-sm">
+            写真からAIが国を判別し、訪問国を地図上でハイライト表示。
+          </p>
+        </div>
+      </section>
+
+      {/* フッター */}
+      <footer className="text-gray-400 text-xs mt-auto">
+        &copy; {new Date().getFullYear()} Roamory. All rights reserved.
       </footer>
     </div>
   );
