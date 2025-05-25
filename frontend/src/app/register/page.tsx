@@ -3,24 +3,25 @@ import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { useAuthStore } from "@/store/auth";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const register = useAuthStore((s) => s.register);
+  const loading = useAuthStore((s) => s.loading);
+  const error = useAuthStore((s) => s.error);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    // ここでAPI連携やバリデーションを実装予定
-    setTimeout(() => {
-      setLoading(false);
-      // 成功時は画面遷移など
-    }, 1000);
+    await register(name, email, password, passwordConfirmation);
+    if (!useAuthStore.getState().error) {
+      router.push("/me");
+    }
   };
 
   return (
@@ -31,7 +32,7 @@ export default function RegisterPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            placeholder="名前"
+            placeholder="ユーザー名"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full border p-2 rounded"
@@ -67,7 +68,7 @@ export default function RegisterPage() {
             className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
             disabled={loading}
           >
-            {loading ? "登録中..." : "登録"}
+            {loading ? "登録中..." : "新規登録"}
           </button>
         </form>
         <div className="mt-4 text-sm text-center">

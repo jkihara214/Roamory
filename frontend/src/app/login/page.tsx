@@ -3,22 +3,23 @@ import React from "react";
 import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
+import { useAuthStore } from "@/store/auth";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const login = useAuthStore((s) => s.login);
+  const loading = useAuthStore((s) => s.loading);
+  const error = useAuthStore((s) => s.error);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-    // ここでAPI連携やバリデーションを実装予定
-    setTimeout(() => {
-      setLoading(false);
-      // 成功時は画面遷移など
-    }, 1000);
+    await login(email, password);
+    if (!useAuthStore.getState().error) {
+      router.push("/me");
+    }
   };
 
   return (

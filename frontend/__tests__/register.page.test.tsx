@@ -9,8 +9,10 @@ jest.mock("@/components/Header", () => () => <div data-testid="mock-header" />);
 describe("RegisterPage (新規登録画面)", () => {
   it("タイトル・入力欄・ボタン・ログインリンクが表示される", () => {
     render(<RegisterPage />);
-    expect(screen.getByText("新規登録")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("名前")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "新規登録" })
+    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("ユーザー名")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("メールアドレス")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("パスワード")).toBeInTheDocument();
     expect(
