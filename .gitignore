@@ -1,0 +1,24 @@
+# Node
+node_modules/
+.next/
+.env.local
+
+# PHP / Laravel
+/vendor/
+/.env
+.phpunit.result.cache
+/storage/*.key
+/storage/app/public/
+/storage/debugbar/
+/storage/framework/
+/storage/logs/
+/public/storage
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp 
