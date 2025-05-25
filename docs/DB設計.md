@@ -96,6 +96,28 @@
 
 ---
 
+## 📝 usage_histories（機能利用履歴）
+
+| カラム名                | 型            | 補足                        |
+| ----------------------- | ------------- | --------------------------- |
+| id                      | bigIncrements | 主キー                      |
+| user_id                 | foreignId     | users テーブル参照          |
+| feature_id              | integer       | 機能 ID（下記対応表を参照） |
+| used_at                 | timestamp     | 利用日時                    |
+| created_at / updated_at | timestamps    | 作成 / 更新日時             |
+
+- 機能利用時にレコードを追加
+- 「本日分の利用回数」を `SELECT COUNT(*) FROM usage_histories WHERE user_id = ? AND feature_id = ? AND used_at >= 今日の0時` で取得
+- 制限回数を超えていれば API でエラー返却
+- 履歴が残るため、将来的な分析や柔軟な制限（週・月単位など）にも対応可能
+
+### 機能 ID と機能名の対応表
+
+| feature_id | 機能名               |
+| ---------- | -------------------- |
+| 1          | travel_plans_ai      |
+| 2          | visited_countries_ai |
+
 ## ✅ 補足事項
 
 - 国選択には `countries` テーブルを使用し、ISO コードを利用することで他 API 連携にも便利です。
