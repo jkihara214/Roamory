@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
@@ -14,15 +14,31 @@ export default function RegisterPage() {
   const register = useAuthStore((s) => s.register);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const fetchMe = useAuthStore((s) => s.fetchMe);
   const router = useRouter();
+
+  useEffect(() => {
+    fetchMe();
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await register(name, email, password, passwordConfirmation);
     if (!useAuthStore.getState().error) {
-      router.push("/me");
+      router.push("/dashboard");
     }
   };
+
+  if (loading) {
+    return <div className="text-center mt-20">判定中...</div>;
+  }
 
   return (
     <>
