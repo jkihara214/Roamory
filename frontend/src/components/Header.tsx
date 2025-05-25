@@ -3,6 +3,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { FaGlobeAsia } from "react-icons/fa";
+import { useAuthStore } from "@/store/auth";
 
 // 仮の認証状態（今後Zustandに差し替え）
 const user = false; // ログイン時はtrueに
@@ -10,6 +11,8 @@ const user = false; // ログイン時はtrueに
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
 
   return (
     <header className="bg-gradient-to-r from-sky-200 via-yellow-100 to-orange-100 shadow mb-8">
@@ -25,7 +28,7 @@ export default function Header() {
           </Link>
         </div>
         <div className="flex items-center gap-4 justify-end flex-1 text-base font-medium">
-          {user ? (
+          {isAuthenticated ? (
             <>
               <Link
                 href="/dashboard"
@@ -44,8 +47,8 @@ export default function Header() {
                 旅行プラン生成
               </Link>
               <button
-                onClick={() => {
-                  // 今後logout処理を実装
+                onClick={async () => {
+                  await logout();
                   router.push("/login");
                 }}
                 className="bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white px-4 py-1 rounded-full shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
