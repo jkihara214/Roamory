@@ -4,6 +4,18 @@ import RegisterPage from "../src/app/register/page";
 
 jest.mock("@/components/Header", () => () => <div data-testid="mock-header" />);
 
+jest.mock("@/store/auth", () => ({
+  useAuthStore: jest.fn((selector) =>
+    selector({
+      loading: false,
+      isAuthenticated: false,
+      error: null,
+      register: jest.fn(),
+      fetchMe: jest.fn(),
+    })
+  ),
+}));
+
 // App Routerフックのモックは不要
 
 describe("RegisterPage (新規登録画面)", () => {
@@ -20,5 +32,11 @@ describe("RegisterPage (新規登録画面)", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /登録/ })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ログイン" })).toBeInTheDocument();
+  });
+
+  it("必須項目が未入力だとボタンがdisabledになる", () => {
+    render(<RegisterPage />);
+    const button = screen.getByRole("button", { name: /登録/ });
+    expect(button).toBeDisabled();
   });
 });
