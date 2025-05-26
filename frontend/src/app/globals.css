@@ -17,3 +17,17 @@ body {
 .animate-spin-slow {
   animation: spin-slow 6s linear infinite;
 }
+
+/* === react-datepicker 土日・曜日ヘッダー色カスタム === */
+.react-datepicker__day.custom-saturday {
+  color: #2563eb !important; /* 土曜: 青 */
+}
+.react-datepicker__day.custom-sunday {
+  color: #ef4444 !important; /* 日曜: 赤 */
+}
+.react-datepicker__day-name:nth-child(1) {
+  color: #ef4444 !important; /* 日曜 */
+}
+.react-datepicker__day-name:nth-child(7) {
+  color: #2563eb !important; /* 土曜 */
+}
