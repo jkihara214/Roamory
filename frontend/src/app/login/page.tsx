@@ -5,6 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const fetchMe = useAuthStore((s) => s.fetchMe);
   const router = useRouter();
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     fetchMe();
@@ -75,16 +77,31 @@ export default function LoginPage() {
             >
               パスワード
             </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="パスワード"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
-              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
-              required
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="パスワード"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() =>
+                  setTouched((prev) => ({ ...prev, password: true }))
+                }
+                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition pr-10 h-10"
+                required
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                tabIndex={-1}
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={
+                  showPassword ? "パスワードを隠す" : "パスワードを表示"
+                }
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
             {touched.password && !password && (
               <p className="text-red-500 text-sm mt-1">パスワードは必須です</p>
             )}
