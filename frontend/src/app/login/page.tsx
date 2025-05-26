@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const login = useAuthStore((s) => s.login);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
@@ -43,28 +44,56 @@ export default function LoginPage() {
       <Header />
       <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
         <h1 className="text-2xl font-bold mb-4">ログイン</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="email"
-            placeholder="メールアドレス"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full border p-2 rounded"
-            required
-          />
-          <input
-            type="password"
-            placeholder="パスワード"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full border p-2 rounded"
-            required
-          />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label
+              className="block mb-1 font-semibold text-gray-700"
+              htmlFor="email"
+            >
+              メールアドレス
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="メールアドレス"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
+              required
+            />
+            {touched.email && !email && (
+              <p className="text-red-500 text-sm mt-1">
+                メールアドレスは必須です
+              </p>
+            )}
+          </div>
+          <div>
+            <label
+              className="block mb-1 font-semibold text-gray-700"
+              htmlFor="password"
+            >
+              パスワード
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="パスワード"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onBlur={() => setTouched((prev) => ({ ...prev, password: true }))}
+              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
+              required
+            />
+            {touched.password && !password && (
+              <p className="text-red-500 text-sm mt-1">パスワードは必須です</p>
+            )}
+          </div>
           {error && <div className="text-red-500 text-sm">{error}</div>}
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
-            disabled={loading}
+            className="w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200 disabled:opacity-50"
+            disabled={loading || !email || !password}
           >
             {loading ? "ログイン中..." : "ログイン"}
           </button>

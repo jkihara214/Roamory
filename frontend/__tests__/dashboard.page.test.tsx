@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import MePage from "../src/app/me/page";
+import MePage from "../src/app/dashboard/page";
 
 jest.mock("@/store/auth", () => ({
   useAuthStore: jest.fn((selector) =>
@@ -26,8 +26,8 @@ describe("MePage (ユーザー情報画面)", () => {
     expect(
       screen.getByText((t) => t.includes("test@example.com"))
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "ログアウト" })
-    ).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button", { name: "ログアウト" });
+    expect(buttons.length).toBeGreaterThanOrEqual(2);
+    expect(buttons[1]).toBeInTheDocument();
   });
 });
