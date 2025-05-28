@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import { FaEye, FaEyeSlash, FaUserPlus } from "react-icons/fa";
 import LoadingModal from "@/components/LoadingModal";
 import { useMinimumLoading } from "@/hooks/useMinimumLoading";
+import AuthLoadingModal from "@/components/AuthLoadingModal";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -25,6 +26,7 @@ export default function RegisterPage() {
   const [showPasswordConf, setShowPasswordConf] = useState(false);
   const [registerAttempted, setRegisterAttempted] = useState(false);
   const showLoading = useMinimumLoading(loading, 1500);
+  const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
 
   useEffect(() => {
     fetchMe();
@@ -47,6 +49,7 @@ export default function RegisterPage() {
 
   return (
     <>
+      {isAuthLoading && <AuthLoadingModal />}
       {registerAttempted && showLoading && <LoadingModal message="作成中..." />}
       <Header />
       <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
