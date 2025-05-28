@@ -5,7 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaUserPlus } from "react-icons/fa";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -47,8 +47,13 @@ export default function RegisterPage() {
   return (
     <>
       <Header />
-      <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
-        <h1 className="text-2xl font-bold mb-4">新規登録</h1>
+      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
+        <div className="flex items-center gap-2 mb-6">
+          <FaUserPlus className="text-2xl text-blue-500" />
+          <h1 className="text-2xl font-bold tracking-wide text-blue-900">
+            新規登録
+          </h1>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label

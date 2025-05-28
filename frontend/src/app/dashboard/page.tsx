@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
+import { FaThLarge } from "react-icons/fa";
 
 export default function MePage() {
   const user = useAuthStore((s) => s.user);
@@ -30,8 +31,13 @@ export default function MePage() {
   return (
     <>
       <Header />
-      <div className="max-w-md mx-auto mt-20 p-6 bg-white rounded shadow">
-        <h1 className="text-2xl font-bold mb-4">ユーザー情報</h1>
+      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
+        <div className="flex items-center gap-2 mb-6">
+          <FaThLarge className="text-2xl text-blue-500" />
+          <h1 className="text-2xl font-bold tracking-wide text-blue-900">
+            ダッシュボード
+          </h1>
+        </div>
         {loading && <div>読み込み中...</div>}
         {error && <div className="text-red-500 text-sm">{error}</div>}
         {user && (
