@@ -6,13 +6,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import { FaMapMarkedAlt } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
+import AuthLoadingModal from "@/components/AuthLoadingModal";
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [budget, setBudget] = useState("");
-  const [mustGoPlaces, setMustGoPlaces] = useState("");
   const [result, setResult] = useState<{ plan: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [placeInput, setPlaceInput] = useState("");
@@ -20,22 +20,20 @@ export default function TravelPlanPage() {
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
   const fetchMe = useAuthStore((s) => s.fetchMe);
   const router = useRouter();
 
   useEffect(() => {
     fetchMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.replace("/login");
     }
-  }, [loading, isAuthenticated, router]);
-
-  if (loading) {
-    return <div className="text-center mt-20">判定中...</div>;
-  }
+  }, [isAuthLoading, isAuthenticated, router]);
 
   const formatBudget = (value: string) => {
     const num = value.replace(/[^0-9]/g, "");
@@ -69,6 +67,7 @@ export default function TravelPlanPage() {
 
   return (
     <>
+      {isAuthLoading && <AuthLoadingModal />}
       <Header />
       <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
         <div className="flex items-center gap-2 mb-6">

@@ -4,10 +4,12 @@ import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { FaThLarge } from "react-icons/fa";
+import AuthLoadingModal from "@/components/AuthLoadingModal";
 
 export default function MePage() {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
   const loading = useAuthStore((s) => s.loading);
   const error = useAuthStore((s) => s.error);
   const fetchMe = useAuthStore((s) => s.fetchMe);
@@ -15,13 +17,14 @@ export default function MePage() {
 
   useEffect(() => {
     fetchMe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!isAuthLoading && !isAuthenticated) {
       router.push("/login");
     }
-  }, [loading, isAuthenticated, router]);
+  }, [isAuthLoading, isAuthenticated, router]);
 
   const handleLogout = () => {
     // ここでログアウト処理を実装予定
@@ -30,6 +33,7 @@ export default function MePage() {
 
   return (
     <>
+      {isAuthLoading && <AuthLoadingModal />}
       <Header />
       <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
         <div className="flex items-center gap-2 mb-6">
