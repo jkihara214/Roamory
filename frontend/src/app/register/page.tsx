@@ -6,6 +6,8 @@ import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { FaEye, FaEyeSlash, FaUserPlus } from "react-icons/fa";
+import LoadingModal from "@/components/LoadingModal";
+import { useMinimumLoading } from "@/hooks/useMinimumLoading";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -21,6 +23,8 @@ export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConf, setShowPasswordConf] = useState(false);
+  const [registerAttempted, setRegisterAttempted] = useState(false);
+  const showLoading = useMinimumLoading(loading, 1500);
 
   useEffect(() => {
     fetchMe();
@@ -34,18 +38,16 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setRegisterAttempted(true);
     await register(name, email, password, passwordConfirmation);
     if (!useAuthStore.getState().error) {
       router.push("/dashboard");
     }
   };
 
-  if (loading) {
-    return <div className="text-center mt-20">判定中...</div>;
-  }
-
   return (
     <>
+      {registerAttempted && showLoading && <LoadingModal message="作成中..." />}
       <Header />
       <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
         <div className="flex items-center gap-2 mb-6">
