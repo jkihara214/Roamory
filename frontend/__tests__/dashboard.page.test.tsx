@@ -14,11 +14,11 @@ jest.mock("@/store/auth", () => ({
   ),
 }));
 
-describe("MePage (ユーザー情報画面)", () => {
+describe("DashboardPage (ダッシュボード画面)", () => {
   it("タイトル・ユーザー名・メールアドレス・ログアウトボタンが表示される", () => {
     render(<MePage />);
     expect(
-      screen.getByText((t) => t.includes("ユーザー情報"))
+      screen.getByRole("heading", { name: /ダッシュボード/ })
     ).toBeInTheDocument();
     expect(
       screen.getByText((t) => t.includes("テストユーザー"))
