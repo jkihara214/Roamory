@@ -18,6 +18,7 @@ type AuthState = {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
+  isAuthLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (
     name: string,
@@ -35,6 +36,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   isAuthenticated: false,
   loading: false,
   error: null,
+  isAuthLoading: true,
   login: async (email, password) => {
     set({ loading: true, error: null });
     try {
@@ -69,14 +71,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
   fetchMe: async () => {
-    set({ loading: true, error: null });
+    set({ loading: true, error: null, isAuthLoading: true });
     try {
       const res = await getMe();
       set({ user: res.data, isAuthenticated: true });
     } catch (e: any) {
       set({ user: null, isAuthenticated: false });
     } finally {
-      set({ loading: false });
+      set({ loading: false, isAuthLoading: false });
     }
   },
   logout: async () => {
