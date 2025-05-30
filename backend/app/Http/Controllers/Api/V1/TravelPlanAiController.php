@@ -54,22 +54,36 @@ class TravelPlanAiController extends Controller
     private function buildPrompt(Request $request): string
     {
         $base = <<<EOT
-あなたは旅行プランナーです。
-以下の条件で日本語で日別の旅行プランを作成してください。
+あなたはプロの旅行プランナーです。
+以下の条件に基づき、日本語で分かりやすく、実用的な旅行プランを日ごとに作成してください。
 
-国: {$request->country}
-出発日: {$request->start_date}
-帰着日: {$request->end_date}
-予算: {$request->budget}円
+【旅行条件】
+・国: {$request->country}
+・出発日: {$request->start_date}
+・帰着日: {$request->end_date}
+・予算: {$request->budget}円
 EOT;
 
         $places = $request->must_go_places ?? [];
         if (is_array($places) && count($places) > 0) {
             $placesStr = implode('、', $places);
-            $base .= "\n必ず行きたい場所: {$placesStr}";
+            $base .= "\n・必ず行きたい場所: {$placesStr}";
         }
 
-        $base .= "\n\n日毎のスケジュール、観光・移動・食事案を含めてください。";
+        $base .= <<<EOT
+
+【出力フォーマット】
+1. 旅行プラン概要（国、日程、予算、主要都市、注意点など）
+2. 日ごとの詳細スケジュール（午前・午後・夜など時間帯ごとに分けて記載）
+3. 各日ごとに「移動手段」「食事」「観光地」「オプショナルツアー」なども具体的に記載
+4. 可能であれば、地名や施設名は太字で強調
+5. マークダウン形式で出力
+
+【注意事項】
+- 予算内で収まるように配慮してください
+- 必ず行きたい場所は必ずスケジュールに含めてください
+- 旅行初心者にも分かりやすい表現を心がけてください
+EOT;
         return $base;
     }
 } 
