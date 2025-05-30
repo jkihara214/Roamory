@@ -11,5 +11,7 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
     "\\.(css|less|scss|sass)$": "identity-obj-proxy",
   },
-  transformIgnorePatterns: ["/node_modules/(?!(react-icons)/)"],
+  transformIgnorePatterns: [
+    "/node_modules/(?!react-markdown|remark-.*|unist-util-.*)/",
+  ],
 };

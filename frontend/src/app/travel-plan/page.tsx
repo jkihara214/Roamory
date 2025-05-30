@@ -3,10 +3,13 @@ import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaMapMarkedAlt } from "react-icons/fa";
+import { FaMapMarkedAlt, FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
+import { getCountries, generateTravelPlan } from "@/lib/api";
+import LoadingModal from "@/components/LoadingModal";
+import ReactMarkdown from "react-markdown";
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -18,6 +21,9 @@ export default function TravelPlanPage() {
   const [placeInput, setPlaceInput] = useState("");
   const [places, setPlaces] = useState<string[]>([]);
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
+  const [countries, setCountries] = useState<
+    { id: number; name_ja: string; name_en: string; code: string }[]
+  >([]);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
@@ -27,6 +33,12 @@ export default function TravelPlanPage() {
   useEffect(() => {
     fetchMe();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    getCountries()
+      .then((res) => setCountries(res.data))
+      .catch(() => setCountries([]));
   }, []);
 
   useEffect(() => {
@@ -54,20 +66,26 @@ export default function TravelPlanPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // TODO: API連携（placesを利用）
-    setTimeout(() => {
-      setResult({
-        plan: `ここにAI生成プランが表示されます（ダミー）\n必ず行きたい場所: ${places.join(
-          ", "
-        )}`,
+    try {
+      const res = await generateTravelPlan({
+        country,
+        start_date: startDate?.toISOString().slice(0, 10) ?? "",
+        end_date: endDate?.toISOString().slice(0, 10) ?? "",
+        budget,
+        must_go_places: places.length > 0 ? places : undefined,
       });
+      setResult({ plan: res.data.plan });
+    } catch (err) {
+      // エラーハンドリング
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
     <>
       {isAuthLoading && <AuthLoadingModal />}
+      {loading && <LoadingModal message="プランを生成中..." />}
       <Header />
       <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
         <div className="flex items-center gap-2 mb-6">
@@ -84,16 +102,21 @@ export default function TravelPlanPage() {
             >
               国名
             </label>
-            <input
+            <select
               id="country"
-              type="text"
-              placeholder="例：日本"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               onBlur={() => setTouched((prev) => ({ ...prev, country: true }))}
               className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
               required
-            />
+            >
+              <option value="">選択してください</option>
+              {countries.map((c) => (
+                <option key={c.id} value={c.name_ja}>
+                  {c.name_ja}
+                </option>
+              ))}
+            </select>
             {touched.country && !country && (
               <p className="text-red-500 text-sm mt-1">国名は必須です</p>
             )}
@@ -239,12 +262,29 @@ export default function TravelPlanPage() {
         </form>
         <div className="mt-10">
           {result && (
-            <div className="p-6 bg-sky-50 rounded-xl shadow border border-sky-200">
-              <h2 className="font-bold mb-2 text-blue-700 text-lg border-b border-blue-200 pb-1 flex items-center gap-2">
+            <div className="p-8 bg-gradient-to-br from-sky-50 to-blue-100 rounded-3xl shadow-xl border border-sky-200">
+              <h2 className="font-bold mb-4 text-blue-700 text-xl flex items-center gap-2">
                 <FaMapMarkedAlt className="text-blue-400" /> 生成結果
               </h2>
-              <div className="text-gray-800 whitespace-pre-line">
-                {result.plan}
+              <div className="prose prose-blue max-w-none">
+                <ReactMarkdown
+                  components={{
+                    h2: ({ node, ...props }) => (
+                      <h2 className="flex items-center gap-2 text-lg text-blue-700 mt-8 mb-2">
+                        <FaInfoCircle className="text-blue-400" />
+                        {props.children}
+                      </h2>
+                    ),
+                    h3: ({ node, ...props }) => (
+                      <h3 className="flex items-center gap-2 text-base text-blue-600 mt-6 mb-1">
+                        <FaCalendarAlt className="text-blue-300" />
+                        {props.children}
+                      </h3>
+                    ),
+                  }}
+                >
+                  {result.plan}
+                </ReactMarkdown>
               </div>
             </div>
           )}

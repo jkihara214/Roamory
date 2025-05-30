@@ -33,4 +33,14 @@ export const getMe = () => api.get("/me");
 
 export const logout = () => api.post("/logout");
 
+export const getCountries = () => api.get("/countries");
+
+export const generateTravelPlan = (data: {
+  country: string;
+  start_date: string;
+  end_date: string;
+  budget: number | string;
+  must_go_places?: string[];
+}) => api.post("/travel-plans/generate", data);
+
 export default api;
