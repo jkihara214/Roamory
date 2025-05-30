@@ -5,6 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Models\UsageHistory;
+use Carbon\Carbon;
+use App\Models\TravelPlan;
+use App\Models\Country;
 
 class TravelPlanAiController extends Controller
 {
@@ -18,6 +22,19 @@ class TravelPlanAiController extends Controller
             'must_go_places' => 'array',
             'must_go_places.*' => 'string',
         ]);
+
+        $user = $request->user();
+        $today = Carbon::today();
+        // 今日のtravel_plans_ai利用回数をカウント
+        $count = UsageHistory::where('user_id', $user->id)
+            ->where('feature_id', 1) // 1: travel_plans_ai
+            ->where('created_at', '>=', $today)
+            ->count();
+        if ($count >= 5) {
+            return response()->json([
+                'error' => '本日のプラン生成回数上限（5回）に達しました。'
+            ], 429);
+        }
 
         // Gemini APIのエンドポイントとAPIキー（.envにGEMINI_API_URL, GEMINI_API_KEYを設定してください。URLはデフォルト値あり）
         $apiUrl = env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite-001:generateContent');
@@ -46,8 +63,35 @@ class TravelPlanAiController extends Controller
         // 必要に応じてAIレスポンスを整形
         $planText = $aiResult['candidates'][0]['content']['parts'][0]['text'] ?? 'AI生成結果が取得できませんでした';
 
+        // 利用履歴を追加
+        UsageHistory::create([
+            'user_id' => $user->id,
+            'feature_id' => 1,
+        ]);
+
+        // country_idを取得（name_jaまたはname_enで検索）
+        $country = Country::where('name_ja', $request->country)
+            ->orWhere('name_en', $request->country)
+            ->first();
+        $countryId = $country ? $country->id : null;
+
+        // travel_plansテーブルに保存
+        $travelPlan = TravelPlan::create([
+            'user_id' => $user->id,
+            'country_id' => $countryId,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'budget' => $request->budget,
+            'must_go_places' => $request->must_go_places ?? [],
+            'plan_json' => [
+                'markdown' => $planText,
+                'raw_ai_response' => $aiResult,
+            ],
+        ]);
+
         return response()->json([
             'plan' => $planText,
+            'travel_plan_id' => $travelPlan->id,
         ]);
     }
 

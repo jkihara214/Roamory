@@ -24,6 +24,7 @@ export default function TravelPlanPage() {
   const [countries, setCountries] = useState<
     { id: number; name_ja: string; name_en: string; code: string }[]
   >([]);
+  const [error, setError] = useState<string | null>(null);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
@@ -66,6 +67,7 @@ export default function TravelPlanPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
     try {
       const res = await generateTravelPlan({
         country,
@@ -75,8 +77,14 @@ export default function TravelPlanPage() {
         must_go_places: places.length > 0 ? places : undefined,
       });
       setResult({ plan: res.data.plan });
-    } catch (err) {
+    } catch (err: any) {
       // エラーハンドリング
+      let msg = "予期せぬエラーが発生しました";
+      if (err?.response?.data?.error) {
+        msg = err.response.data.error;
+      }
+      setError(msg);
+      setResult(null);
     } finally {
       setLoading(false);
     }
@@ -261,7 +269,15 @@ export default function TravelPlanPage() {
           </button>
         </form>
         <div className="mt-10">
-          {result && (
+          {error && (
+            <div className="p-8 bg-gradient-to-br from-red-100 to-red-200 rounded-3xl shadow-xl border border-red-300">
+              <h2 className="font-bold mb-4 text-red-700 text-xl flex items-center gap-2">
+                <FaInfoCircle className="text-red-400" /> エラー
+              </h2>
+              <div className="text-red-700 text-lg font-semibold">{error}</div>
+            </div>
+          )}
+          {result && !error && (
             <div className="p-8 bg-gradient-to-br from-sky-50 to-blue-100 rounded-3xl shadow-xl border border-sky-200">
               <h2 className="font-bold mb-4 text-blue-700 text-xl flex items-center gap-2">
                 <FaMapMarkedAlt className="text-blue-400" /> 生成結果
@@ -269,13 +285,25 @@ export default function TravelPlanPage() {
               <div className="prose prose-blue max-w-none">
                 <ReactMarkdown
                   components={{
-                    h2: ({ node, ...props }) => (
+                    h2: ({
+                      node,
+                      ...props
+                    }: {
+                      node: any;
+                      [key: string]: any;
+                    }) => (
                       <h2 className="flex items-center gap-2 text-lg text-blue-700 mt-8 mb-2">
                         <FaInfoCircle className="text-blue-400" />
                         {props.children}
                       </h2>
                     ),
-                    h3: ({ node, ...props }) => (
+                    h3: ({
+                      node,
+                      ...props
+                    }: {
+                      node: any;
+                      [key: string]: any;
+                    }) => (
                       <h3 className="flex items-center gap-2 text-base text-blue-600 mt-6 mb-1">
                         <FaCalendarAlt className="text-blue-300" />
                         {props.children}
