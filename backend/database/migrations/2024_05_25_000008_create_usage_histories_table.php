@@ -12,7 +12,6 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->integer('feature_id')->comment('1: travel_plans_ai, 2: visited_countries_ai');
-            $table->timestamp('used_at');
             $table->timestamps();
         });
     }
