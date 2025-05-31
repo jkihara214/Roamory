@@ -10,6 +10,7 @@ import AuthLoadingModal from "@/components/AuthLoadingModal";
 import { getCountries, generateTravelPlan } from "@/lib/api";
 import LoadingModal from "@/components/LoadingModal";
 import ReactMarkdown from "react-markdown";
+import type { HTMLAttributes } from "react";
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -156,7 +157,7 @@ export default function TravelPlanPage() {
                   const day = date.getDay();
                   if (day === 0) return "custom-sunday";
                   if (day === 6) return "custom-saturday";
-                  return undefined;
+                  return "";
                 }}
               />
               {touched.startDate && !startDate && (
@@ -180,7 +181,7 @@ export default function TravelPlanPage() {
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
-                minDate={startDate}
+                minDate={startDate ?? undefined}
                 dateFormat="yyyy-MM-dd"
                 placeholderText="帰国日"
                 className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
@@ -190,7 +191,7 @@ export default function TravelPlanPage() {
                   const day = date.getDay();
                   if (day === 0) return "custom-sunday";
                   if (day === 6) return "custom-saturday";
-                  return undefined;
+                  return "";
                 }}
               />
               {touched.endDate && !endDate && (
@@ -285,26 +286,20 @@ export default function TravelPlanPage() {
               <div className="prose prose-blue max-w-none">
                 <ReactMarkdown
                   components={{
-                    h2: ({
-                      node,
-                      ...props
-                    }: {
-                      node: any;
-                      [key: string]: any;
-                    }) => (
-                      <h2 className="flex items-center gap-2 text-lg text-blue-700 mt-8 mb-2">
+                    h2: (props: HTMLAttributes<HTMLHeadingElement>) => (
+                      <h2
+                        {...props}
+                        className="flex items-center gap-2 text-lg text-blue-700 mt-8 mb-2"
+                      >
                         <FaInfoCircle className="text-blue-400" />
                         {props.children}
                       </h2>
                     ),
-                    h3: ({
-                      node,
-                      ...props
-                    }: {
-                      node: any;
-                      [key: string]: any;
-                    }) => (
-                      <h3 className="flex items-center gap-2 text-base text-blue-600 mt-6 mb-1">
+                    h3: (props: HTMLAttributes<HTMLHeadingElement>) => (
+                      <h3
+                        {...props}
+                        className="flex items-center gap-2 text-base text-blue-600 mt-6 mb-1"
+                      >
                         <FaCalendarAlt className="text-blue-300" />
                         {props.children}
                       </h3>
