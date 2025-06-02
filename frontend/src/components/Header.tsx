@@ -13,9 +13,10 @@ export default function Header() {
   const router = useRouter();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const logout = useAuthStore((s) => s.logout);
+  const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-sky-200 via-yellow-100 to-orange-100 shadow mb-8">
+    <header className="bg-gradient-to-r from-sky-200 via-yellow-100 to-orange-100 shadow mb-2">
       <nav className="flex items-center px-6 py-3">
         <div className="flex-1 flex items-center gap-2">
           <FaGlobeAsia className="text-2xl text-blue-600 drop-shadow animate-spin-slow" />
@@ -27,41 +28,106 @@ export default function Header() {
             Roamory
           </Link>
         </div>
-        <div className="flex items-center gap-4 justify-end flex-1 text-base font-medium">
+        <div className="flex items-center gap-4 justify-end text-base font-medium">
           {isAuthenticated ? (
             <>
-              <Link
-                href="/dashboard"
-                className={`hover:text-orange-500 transition ${
-                  pathname === "/dashboard" ? "underline" : ""
-                }`}
-              >
-                ダッシュボード
-              </Link>
-              <Link
-                href="/travel-plan"
-                className={`hover:text-orange-500 transition ${
-                  pathname === "/travel-plan" ? "underline" : ""
-                }`}
-              >
-                旅行プラン生成
-              </Link>
+              {/* PC/タブレット用ナビ */}
+              <div className="hidden sm:flex items-center gap-4">
+                <Link
+                  href="/dashboard"
+                  className={`whitespace-nowrap hover:text-orange-500 transition ${
+                    pathname === "/dashboard" ? "underline" : ""
+                  }`}
+                >
+                  ダッシュボード
+                </Link>
+                <Link
+                  href="/travel-plan"
+                  className={`whitespace-nowrap hover:text-orange-500 transition ${
+                    pathname === "/travel-plan" ? "underline" : ""
+                  }`}
+                >
+                  旅行プラン生成
+                </Link>
+                <button
+                  onClick={async () => {
+                    await logout();
+                    router.push("/login");
+                  }}
+                  className="whitespace-nowrap bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white px-4 py-1 rounded-full shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                  style={{ boxShadow: "0 2px 8px 0 rgba(255, 167, 38, 0.15)" }}
+                >
+                  ログアウト
+                </button>
+              </div>
+              {/* スマホ用バーガーアイコン */}
               <button
-                onClick={async () => {
-                  await logout();
-                  router.push("/login");
-                }}
-                className="bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white px-4 py-1 rounded-full shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
-                style={{ boxShadow: "0 2px 8px 0 rgba(255, 167, 38, 0.15)" }}
+                className="sm:hidden ml-2 p-2 rounded focus:outline-none"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label="メニューを開く"
               >
-                ログアウト
+                <span className="block w-6 h-0.5 bg-blue-800 mb-1"></span>
+                <span className="block w-6 h-0.5 bg-blue-800 mb-1"></span>
+                <span className="block w-6 h-0.5 bg-blue-800"></span>
               </button>
+              {/* スマホ用メニュー */}
+              {menuOpen && (
+                <div className="fixed inset-0 z-50 flex">
+                  {/* 透過オーバーレイ（左側） */}
+                  <div
+                    className="flex-1 bg-black/40"
+                    onClick={() => setMenuOpen(false)}
+                    aria-label="メニューを閉じる"
+                  />
+                  {/* メニュー本体（右側） */}
+                  <div className="bg-white w-2/3 max-w-xs h-full shadow-lg p-6 flex flex-col gap-6">
+                    <button
+                      onClick={() => setMenuOpen(false)}
+                      className="mb-4 self-end text-2xl"
+                    >
+                      ✕
+                    </button>
+                    <Link
+                      href="/dashboard"
+                      className={`whitespace-nowrap hover:text-orange-500 transition ${
+                        pathname === "/dashboard" ? "underline" : ""
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      ダッシュボード
+                    </Link>
+                    <Link
+                      href="/travel-plan"
+                      className={`whitespace-nowrap hover:text-orange-500 transition ${
+                        pathname === "/travel-plan" ? "underline" : ""
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      旅行プラン生成
+                    </Link>
+                    <button
+                      onClick={async () => {
+                        await logout();
+                        setMenuOpen(false);
+                        router.push("/login");
+                      }}
+                      className="whitespace-nowrap bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white px-4 py-1 rounded-full shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300"
+                      style={{
+                        boxShadow: "0 2px 8px 0 rgba(255, 167, 38, 0.15)",
+                      }}
+                    >
+                      ログアウト
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           ) : (
-            <>
+            // 未ログイン時は常に横並び
+            <div className="flex items-center gap-4">
               <Link
                 href="/login"
-                className={`px-4 py-1 rounded-full bg-gradient-to-r from-blue-400 to-sky-400 hover:from-blue-500 hover:to-sky-500 text-white shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-300 ${
+                className={`whitespace-nowrap px-4 py-1 rounded-full bg-gradient-to-r from-blue-400 to-sky-400 hover:from-blue-500 hover:to-sky-500 text-white shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-sky-300 ${
                   pathname === "/login" ? "underline" : ""
                 }`}
                 style={{ boxShadow: "0 2px 8px 0 rgba(38, 167, 255, 0.15)" }}
@@ -70,14 +136,14 @@ export default function Header() {
               </Link>
               <Link
                 href="/register"
-                className={`px-4 py-1 rounded-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300 ${
+                className={`whitespace-nowrap px-4 py-1 rounded-full bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white shadow transition-all duration-300 transform hover:scale-105 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-orange-300 ${
                   pathname === "/register" ? "underline" : ""
                 }`}
                 style={{ boxShadow: "0 2px 8px 0 rgba(255, 167, 38, 0.15)" }}
               >
                 新規登録
               </Link>
-            </>
+            </div>
           )}
         </div>
       </nav>

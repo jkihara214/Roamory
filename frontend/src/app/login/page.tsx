@@ -49,87 +49,91 @@ export default function LoginPage() {
       {isAuthLoading && <AuthLoadingModal />}
       {loginAttempted && showLoading && <LoadingModal message="確認中..." />}
       <Header />
-      <div className="max-w-xl mx-auto mt-10 p-6 bg-white rounded-2xl shadow-2xl border border-sky-100 sm:p-10">
-        <div className="flex items-center gap-2 mb-6">
-          <FaSignInAlt className="text-2xl text-blue-500" />
-          <h1 className="text-2xl font-bold tracking-wide text-blue-900">
-            ログイン
-          </h1>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label
-              className="block mb-1 font-semibold text-gray-700"
-              htmlFor="email"
-            >
-              メールアドレス
-            </label>
-            <input
-              id="email"
-              type="email"
-              placeholder="メールアドレス"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
-              className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
-              required
-            />
-            {touched.email && !email && (
-              <p className="text-red-500 text-sm mt-1">
-                メールアドレスは必須です
-              </p>
-            )}
+      <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
+        <div className="w-full max-w-md sm:max-w-xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
+          <div className="flex items-center gap-2 mb-6">
+            <FaSignInAlt className="text-2xl text-blue-500" />
+            <h1 className="text-xl sm:text-2xl font-bold tracking-wide text-blue-900">
+              ログイン
+            </h1>
           </div>
-          <div>
-            <label
-              className="block mb-1 font-semibold text-gray-700"
-              htmlFor="password"
-            >
-              パスワード
-            </label>
-            <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label
+                className="block mb-1 font-semibold text-gray-700"
+                htmlFor="email"
+              >
+                メールアドレス
+              </label>
               <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                placeholder="パスワード"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onBlur={() =>
-                  setTouched((prev) => ({ ...prev, password: true }))
-                }
-                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition pr-10 h-10"
+                id="email"
+                type="email"
+                placeholder="メールアドレス"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => setTouched((prev) => ({ ...prev, email: true }))}
+                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                 required
               />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                tabIndex={-1}
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={
-                  showPassword ? "パスワードを隠す" : "パスワードを表示"
-                }
-              >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
-              </button>
+              {touched.email && !email && (
+                <p className="text-red-500 text-sm mt-1">
+                  メールアドレスは必須です
+                </p>
+              )}
             </div>
-            {touched.password && !password && (
-              <p className="text-red-500 text-sm mt-1">パスワードは必須です</p>
-            )}
+            <div>
+              <label
+                className="block mb-1 font-semibold text-gray-700"
+                htmlFor="password"
+              >
+                パスワード
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="パスワード"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onBlur={() =>
+                    setTouched((prev) => ({ ...prev, password: true }))
+                  }
+                  className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition pr-10 h-10"
+                  required
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  tabIndex={-1}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={
+                    showPassword ? "パスワードを隠す" : "パスワードを表示"
+                  }
+                >
+                  {showPassword ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+              {touched.password && !password && (
+                <p className="text-red-500 text-sm mt-1">
+                  パスワードは必須です
+                </p>
+              )}
+            </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+            <button
+              type="submit"
+              className="w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200 disabled:opacity-50"
+              disabled={loading || !email || !password}
+            >
+              {loading ? "ログイン中..." : "ログイン"}
+            </button>
+          </form>
+          <div className="mt-4 text-sm text-center">
+            アカウントをお持ちでない方は{" "}
+            <Link href="/register" className="text-blue-600 underline">
+              新規登録
+            </Link>
           </div>
-          {error && <div className="text-red-500 text-sm">{error}</div>}
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200 disabled:opacity-50"
-            disabled={loading || !email || !password}
-          >
-            {loading ? "ログイン中..." : "ログイン"}
-          </button>
-        </form>
-        <div className="mt-4 text-sm text-center">
-          アカウントをお持ちでない方は{" "}
-          <Link href="/register" className="text-blue-600 underline">
-            新規登録
-          </Link>
         </div>
       </div>
     </>
