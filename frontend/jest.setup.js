@@ -1,3 +1,4 @@
+import "@testing-library/jest-dom";
 // next/navigationのuseRouter, usePathnameをテスト時にモック
 jest.mock("next/navigation", () => ({
   useRouter: () => ({

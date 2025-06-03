@@ -7,23 +7,24 @@ jest.mock("next/navigation", () => ({
   usePathname: () => "/",
 }));
 
-// useAuthStoreのモック
+// Zustandのセレクタ関数対応モック
+let mockState: any;
 const mockLogout = jest.fn().mockResolvedValue(undefined);
-const mockUseAuthStore = jest.fn();
 jest.mock("@/store/auth", () => ({
-  useAuthStore: () => mockUseAuthStore(),
+  useAuthStore: (selector: any) => selector(mockState),
 }));
 
 describe("Header", () => {
   beforeEach(() => {
     mockLogout.mockClear();
+    mockState = {
+      isAuthenticated: false,
+      logout: mockLogout,
+    };
   });
 
   it("未ログイン時はロゴ・ログイン・新規登録ボタンが表示される", () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: false,
-      logout: mockLogout,
-    });
+    mockState.isAuthenticated = false;
     render(<Header />);
     expect(screen.getByText("Roamory")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "ログイン" })).toBeInTheDocument();
@@ -31,10 +32,7 @@ describe("Header", () => {
   });
 
   it("ログイン時はダッシュボード・旅行プラン生成・ログアウトボタンが表示される", () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
-      logout: mockLogout,
-    });
+    mockState.isAuthenticated = true;
     render(<Header />);
     expect(screen.getByText("Roamory")).toBeInTheDocument();
     expect(
@@ -49,10 +47,7 @@ describe("Header", () => {
   });
 
   it("ログアウトボタンを押すとlogoutが呼ばれる", async () => {
-    mockUseAuthStore.mockReturnValue({
-      isAuthenticated: true,
-      logout: mockLogout,
-    });
+    mockState.isAuthenticated = true;
     render(<Header />);
     const logoutBtn = screen.getByRole("button", { name: "ログアウト" });
     fireEvent.click(logoutBtn);

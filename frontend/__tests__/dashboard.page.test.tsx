@@ -2,14 +2,9 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import MePage from "../src/app/dashboard/page";
 
+let mockAuthState: any;
 jest.mock("@/store/auth", () => ({
-  useAuthStore: jest.fn((selector) =>
-    selector({
-      isAuthenticated: true,
-      isAuthLoading: false,
-      fetchMe: jest.fn(),
-    })
-  ),
+  useAuthStore: (selector: any) => selector(mockAuthState),
 }));
 
 jest.mock("@/components/AuthLoadingModal", () => () => (
@@ -17,6 +12,14 @@ jest.mock("@/components/AuthLoadingModal", () => () => (
 ));
 
 describe("DashboardPage (ダッシュボード画面)", () => {
+  beforeEach(() => {
+    mockAuthState = {
+      isAuthenticated: true,
+      isAuthLoading: false,
+      fetchMe: jest.fn(),
+    };
+  });
+
   it("タイトル・旅行プラン生成リンクが表示される", () => {
     render(<MePage />);
     expect(
@@ -33,17 +36,8 @@ describe("DashboardPage (ダッシュボード画面)", () => {
   });
 
   it("isAuthLoadingがtrueならAuthLoadingModalが表示される", () => {
-    jest.mock("@/store/auth", () => ({
-      useAuthStore: jest.fn((selector) =>
-        selector({
-          isAuthenticated: true,
-          isAuthLoading: true,
-          fetchMe: jest.fn(),
-        })
-      ),
-    }));
-    const MePageWithLoading = require("../src/app/dashboard/page").default;
-    render(<MePageWithLoading />);
+    mockAuthState.isAuthLoading = true;
+    render(<MePage />);
     expect(screen.getByTestId("mock-auth-loading")).toBeInTheDocument();
   });
 });
