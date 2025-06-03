@@ -34,7 +34,8 @@
 | カラム名                | 型                | 補足                                                       |
 | ----------------------- | ----------------- | ---------------------------------------------------------- |
 | id                      | bigIncrements     | 主キー                                                     |
-| name                    | string            | 国名（例：Japan）                                          |
+| name_ja                 | string            | 国名（日本語例：日本）                                     |
+| name_en                 | string            | 国名（英語例：Japan）                                      |
 | code                    | string(2)         | ISO 3166-1 alpha-2 コード（例：JP）                        |
 | geojson_url             | string (nullable) | 国境線 GeoJSON ファイルの URL（S3 など外部ストレージ想定） |
 | created_at / updated_at | timestamps        | 作成 / 更新日時                                            |
@@ -95,6 +96,27 @@
 | created_at / updated_at | timestamps      | 作成 / 更新日時                      |
 
 ---
+
+## 📝 usage_histories（機能利用履歴）
+
+| カラム名                | 型            | 補足                        |
+| ----------------------- | ------------- | --------------------------- |
+| id                      | bigIncrements | 主キー                      |
+| user_id                 | foreignId     | users テーブル参照          |
+| feature_id              | integer       | 機能 ID（下記対応表を参照） |
+| created_at / updated_at | timestamps    | 作成 / 更新日時             |
+
+- 機能利用時にレコードを追加
+- 「本日分の利用回数」を `SELECT COUNT(*) FROM usage_histories WHERE user_id = ? AND feature_id = ? AND created_at >= 今日の0時` で取得
+- 制限回数を超えていれば API でエラー返却
+- 履歴が残るため、将来的な分析や柔軟な制限（週・月単位など）にも対応可能
+
+### 機能 ID と機能名の対応表
+
+| feature_id | 機能名               |
+| ---------- | -------------------- |
+| 1          | travel_plans_ai      |
+| 2          | visited_countries_ai |
 
 ## ✅ 補足事項
 
