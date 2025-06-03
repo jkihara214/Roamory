@@ -2,11 +2,29 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import TravelPlanPage from "../src/app/travel-plan/page";
 import api from "../src/lib/api";
+import { AxiosResponse } from "axios";
+
+function mockAxiosResponse<T>(data: T): AxiosResponse<T> {
+  return {
+    data,
+    status: 200,
+    statusText: "OK",
+    headers: {},
+    config: {} as any,
+  };
+}
+
+let mockAuthState: any;
+jest.mock("@/store/auth", () => ({
+  useAuthStore: (selector: any) => selector(mockAuthState),
+}));
 
 beforeAll(() => {
-  // fetchのモック（必要なら）
   global.fetch = jest.fn(() =>
     Promise.resolve({
+      ok: true,
+      status: 200,
+      statusText: "OK",
       json: () =>
         Promise.resolve([
           {
@@ -24,14 +42,24 @@ beforeAll(() => {
             geojson_url: null,
           },
         ]),
-    })
+      headers: new Headers(),
+      redirected: false,
+      type: "basic",
+      url: "",
+      clone: function () {
+        return this;
+      },
+      body: null,
+      bodyUsed: false,
+      text: async () => JSON.stringify([]),
+    } as Response)
   );
 
   // apiインスタンスのget/postを直接モック
   api.get = jest.fn((url) => {
     if (url.includes("/countries")) {
-      return Promise.resolve({
-        data: [
+      return Promise.resolve(
+        mockAxiosResponse([
           {
             id: 1,
             name_ja: "日本",
@@ -46,18 +74,18 @@ beforeAll(() => {
             code: "US",
             geojson_url: null,
           },
-        ],
-      });
+        ])
+      ) as any;
     }
-    return Promise.resolve({ data: {} });
+    return Promise.resolve(mockAxiosResponse({})) as any;
   });
   api.post = jest.fn((url, data) => {
     if (url.includes("/travel-plans/generate")) {
-      return Promise.resolve({
-        data: { plan: "# ダミー旅行プラン\n- サンプル日程" },
-      });
+      return Promise.resolve(
+        mockAxiosResponse({ plan: "# ダミー旅行プラン\n- サンプル日程" })
+      ) as any;
     }
-    return Promise.resolve({ data: {} });
+    return Promise.resolve(mockAxiosResponse({})) as any;
   });
 });
 
@@ -66,17 +94,15 @@ jest.mock("next/navigation", () => ({
   useRouter: () => ({ replace: jest.fn() }),
 }));
 
-jest.mock("@/store/auth", () => ({
-  useAuthStore: jest.fn((selector) =>
-    selector({
-      user: { name: "テストユーザー", email: "test@example.com" },
-      isAuthenticated: true,
-      loading: false,
-      error: null,
-      fetchMe: jest.fn(),
-    })
-  ),
-}));
+beforeEach(() => {
+  mockAuthState = {
+    user: { name: "テストユーザー", email: "test@example.com" },
+    isAuthenticated: true,
+    loading: false,
+    error: null,
+    fetchMe: jest.fn(),
+  };
+});
 
 describe("TravelPlanPage (旅行プラン生成画面)", () => {
   it("主要なUI要素が表示される", async () => {
