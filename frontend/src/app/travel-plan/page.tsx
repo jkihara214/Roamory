@@ -11,6 +11,7 @@ import { getCountries, generateTravelPlan } from "@/lib/api";
 import LoadingModal from "@/components/LoadingModal";
 import ReactMarkdown from "react-markdown";
 import type { HTMLAttributes } from "react";
+import { isAxiosError } from "axios";
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -78,10 +79,9 @@ export default function TravelPlanPage() {
         must_go_places: places.length > 0 ? places : undefined,
       });
       setResult({ plan: res.data.plan });
-    } catch (err: any) {
-      // エラーハンドリング
+    } catch (err: unknown) {
       let msg = "予期せぬエラーが発生しました";
-      if (err?.response?.data?.error) {
+      if (isAxiosError(err) && err.response?.data?.error) {
         msg = err.response.data.error;
       }
       setError(msg);

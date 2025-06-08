@@ -42,11 +42,14 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await apiLogin({ email, password });
       set({ token: res.data.token, isAuthenticated: true });
-      localStorage.setItem("token", res.data.token);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", res.data.token);
+      }
       const meRes = await getMe();
       set({ user: meRes.data });
-    } catch (e: any) {
-      set({ error: e?.response?.data?.message || "ログインに失敗しました" });
+    } catch (e) {
+      const err = e as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "ログインに失敗しました" });
     } finally {
       set({ loading: false });
     }
@@ -61,11 +64,14 @@ export const useAuthStore = create<AuthState>((set) => ({
         password_confirmation,
       });
       set({ token: res.data.token, isAuthenticated: true });
-      localStorage.setItem("token", res.data.token);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", res.data.token);
+      }
       const meRes = await getMe();
       set({ user: meRes.data });
-    } catch (e: any) {
-      set({ error: e?.response?.data?.message || "登録に失敗しました" });
+    } catch (e) {
+      const err = e as { response?: { data?: { message?: string } } };
+      set({ error: err?.response?.data?.message || "登録に失敗しました" });
     } finally {
       set({ loading: false });
     }
@@ -75,7 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await getMe();
       set({ user: res.data, isAuthenticated: true });
-    } catch (e: any) {
+    } catch {
       set({ user: null, isAuthenticated: false });
     } finally {
       set({ loading: false, isAuthLoading: false });
@@ -85,9 +91,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ loading: true, error: null });
     try {
       await apiLogout();
-    } catch (e) {}
+    } catch {}
     set({ user: null, token: null, isAuthenticated: false });
-    localStorage.removeItem("token");
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+    }
     set({ loading: false });
   },
 }));

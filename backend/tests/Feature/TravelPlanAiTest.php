@@ -193,7 +193,7 @@ class TravelPlanAiTest extends TestCase
         ];
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/travel-plans/generate', $payload);
-        $response->assertStatus(500);
-        // 今後は「国が見つからない」旨のエラー返却に改善しても良い
+        $response->assertStatus(422)
+            ->assertJsonPath('error', '指定された国「日本」が見つかりません。正しい国名を入力してください。');
     }
 } 
