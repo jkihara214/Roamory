@@ -30,7 +30,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   useEffect(() => {
     if (isAuthenticated) {

@@ -27,7 +27,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   useEffect(() => {
     if (isAuthenticated) {

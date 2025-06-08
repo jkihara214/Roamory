@@ -73,7 +73,15 @@ class TravelPlanAiController extends Controller
         $country = Country::where('name_ja', $request->country)
             ->orWhere('name_en', $request->country)
             ->first();
-        $countryId = $country ? $country->id : null;
+        
+        // 国が見つからない場合はエラーを返す
+        if (!$country) {
+            return response()->json([
+                'error' => '指定された国「' . $request->country . '」が見つかりません。正しい国名を入力してください。'
+            ], 422);
+        }
+        
+        $countryId = $country->id;
 
         // travel_plansテーブルに保存
         $travelPlan = TravelPlan::create([

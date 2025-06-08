@@ -5,9 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { FaGlobeAsia } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 
-// 仮の認証状態（今後Zustandに差し替え）
-const user = false; // ログイン時はtrueに
-
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();

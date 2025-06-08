@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1", // .env.localで上書き可
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api", // .env.localで上書き可
   headers: {
     "Content-Type": "application/json",
   },
@@ -24,16 +24,16 @@ export const register = (data: {
   email: string;
   password: string;
   password_confirmation: string;
-}) => api.post("/register", data);
+}) => api.post("/v1/register", data);
 
 export const login = (data: { email: string; password: string }) =>
-  api.post("/login", data);
+  api.post("/v1/login", data);
 
-export const getMe = () => api.get("/me");
+export const getMe = () => api.get("/v1/me");
 
-export const logout = () => api.post("/logout");
+export const logout = () => api.post("/v1/logout");
 
-export const getCountries = () => api.get("/countries");
+export const getCountries = () => api.get("/v1/countries");
 
 export const generateTravelPlan = (data: {
   country: string;
@@ -41,6 +41,6 @@ export const generateTravelPlan = (data: {
   end_date: string;
   budget: number | string;
   must_go_places?: string[];
-}) => api.post("/travel-plans/generate", data);
+}) => api.post("/v1/travel-plans/generate", data);
 
 export default api;
