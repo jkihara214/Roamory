@@ -18,7 +18,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 認証API
+// ============================================
+// 認証関連API（認証不要）
+// ============================================
 export const register = (data: {
   name: string;
   email: string;
@@ -29,12 +31,20 @@ export const register = (data: {
 export const login = (data: { email: string; password: string }) =>
   api.post("/v1/login", data);
 
-export const getMe = () => api.get("/v1/me");
-
-export const logout = () => api.post("/v1/logout");
-
+// ============================================
+// 公開API（認証不要）
+// ============================================
 export const getCountries = () => api.get("/v1/countries");
 
+// ============================================
+// 認証が必要なAPI
+// ============================================
+
+// ユーザー関連
+export const getMe = () => api.get("/v1/me");
+export const logout = () => api.post("/v1/logout");
+
+// 旅行プラン生成
 export const generateTravelPlan = (data: {
   country: string;
   start_date: string;
@@ -42,5 +52,31 @@ export const generateTravelPlan = (data: {
   budget: number | string;
   must_go_places?: string[];
 }) => api.post("/v1/travel-plans/generate", data);
+
+// 旅行日記（RESTful リソース）
+export const getTravelDiaries = () => api.get("/v1/travel-diaries");
+
+export const createTravelDiary = (data: {
+  latitude: number;
+  longitude: number;
+  title: string;
+  content: string;
+}) => api.post("/v1/travel-diaries", data);
+
+export const getTravelDiary = (id: number) =>
+  api.get(`/v1/travel-diaries/${id}`);
+
+export const updateTravelDiary = (
+  id: number,
+  data: {
+    latitude?: number;
+    longitude?: number;
+    title?: string;
+    content?: string;
+  }
+) => api.put(`/v1/travel-diaries/${id}`, data);
+
+export const deleteTravelDiary = (id: number) =>
+  api.delete(`/v1/travel-diaries/${id}`);
 
 export default api;

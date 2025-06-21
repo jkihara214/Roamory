@@ -2,11 +2,25 @@
 import React, { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import DiaryMap from "@/components/DiaryMap";
+import DiaryForm from "@/components/DiaryForm";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
-import { MapClickEvent } from "@/types/diary";
+import { MapClickEvent, TravelDiary } from "@/types/diary";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
-import { FaBook, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaBook,
+  FaMapMarkerAlt,
+  FaPlus,
+  FaTrash,
+  FaEdit,
+} from "react-icons/fa";
+import {
+  getTravelDiaries,
+  createTravelDiary,
+  updateTravelDiary,
+  deleteTravelDiary,
+} from "@/lib/api";
+import { isAxiosError } from "axios";
 
 export default function DiaryPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -17,6 +31,11 @@ export default function DiaryPage() {
   const [clickedLocation, setClickedLocation] = useState<MapClickEvent | null>(
     null
   );
+  const [diaries, setDiaries] = useState<TravelDiary[]>([]);
+  const [showForm, setShowForm] = useState(false);
+  const [editingDiary, setEditingDiary] = useState<TravelDiary | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMe();
@@ -29,9 +48,113 @@ export default function DiaryPage() {
     }
   }, [isAuthLoading, isAuthenticated, router]);
 
+  // 認証完了後に日記一覧を取得
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadDiaries();
+    }
+  }, [isAuthenticated]);
+
+  const loadDiaries = async () => {
+    try {
+      const response = await getTravelDiaries();
+      setDiaries(response.data);
+    } catch (err) {
+      console.error("日記の取得に失敗しました:", err);
+      setError("日記の取得に失敗しました");
+    }
+  };
+
   const handleMapClick = (event: MapClickEvent) => {
     setClickedLocation(event);
-    console.log("地図クリック座標:", event);
+    setEditingDiary(null);
+    setShowForm(true);
+  };
+
+  const handleDiaryClick = (diary: TravelDiary) => {
+    setEditingDiary(diary);
+    setClickedLocation(null); // クリック位置のピンを削除
+    setShowForm(true);
+  };
+
+  const handleCreateDiary = async (data: {
+    title: string;
+    content: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await createTravelDiary(data);
+      setDiaries([response.data, ...diaries]);
+      setShowForm(false);
+      setClickedLocation(null);
+    } catch (err) {
+      let message = "日記の作成に失敗しました";
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleUpdateDiary = async (data: {
+    title: string;
+    content: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    if (!editingDiary) return;
+
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await updateTravelDiary(editingDiary.id, data);
+      setDiaries(
+        diaries.map((d) => (d.id === editingDiary.id ? response.data : d))
+      );
+      setShowForm(false);
+      setEditingDiary(null);
+    } catch (err) {
+      let message = "日記の更新に失敗しました";
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteDiary = async (id: number) => {
+    if (!confirm("この日記を削除しますか？")) return;
+
+    try {
+      await deleteTravelDiary(id);
+      setDiaries(diaries.filter((d) => d.id !== id));
+    } catch (err) {
+      let message = "日記の削除に失敗しました";
+      if (isAxiosError(err) && err.response?.data?.message) {
+        message = err.response.data.message;
+      }
+      setError(message);
+    }
+  };
+
+  const handleModalSubmit = (data: {
+    title: string;
+    content: string;
+    latitude: number;
+    longitude: number;
+  }) => {
+    if (editingDiary) {
+      handleUpdateDiary(data);
+    } else {
+      handleCreateDiary(data);
+    }
   };
 
   return (
@@ -50,45 +173,113 @@ export default function DiaryPage() {
 
           <div className="mb-6">
             <p className="text-gray-600 text-center">
-              地図をクリックして、旅の思い出を記録しましょう
+              地図をクリックすると、ピンが表示され下に日記作成フォームが表示されます
             </p>
           </div>
 
+          {/* エラー表示 */}
+          {error && (
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-700 text-sm">{error}</p>
+              <button
+                onClick={() => setError(null)}
+                className="mt-2 text-red-600 hover:text-red-800 text-xs underline"
+              >
+                閉じる
+              </button>
+            </div>
+          )}
+
           {/* 地図エリア */}
           <div className="mb-6">
-            <DiaryMap onMapClick={handleMapClick} />
+            <DiaryMap
+              onMapClick={handleMapClick}
+              diaries={diaries}
+              onDiaryClick={handleDiaryClick}
+              clickedLocation={clickedLocation}
+            />
           </div>
 
-          {/* クリック情報表示 */}
-          {clickedLocation && (
-            <div className="p-6 bg-gradient-to-br from-blue-50 to-sky-100 rounded-2xl shadow-md border border-blue-200">
-              <h3 className="font-bold mb-4 text-blue-700 text-lg flex items-center gap-2">
-                <FaMapMarkerAlt className="text-blue-400" />
-                クリックした場所
+          {/* 日記一覧 */}
+          {diaries.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FaBook className="text-green-500" />
+                あなたの日記 ({diaries.length}件)
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                <div className="bg-white bg-opacity-50 rounded-lg p-3">
-                  <span className="font-semibold text-gray-700 block">
-                    緯度:
-                  </span>
-                  <span className="text-gray-800 font-mono">
-                    {clickedLocation.lat.toFixed(6)}
-                  </span>
-                </div>
-                <div className="bg-white bg-opacity-50 rounded-lg p-3">
-                  <span className="font-semibold text-gray-700 block">
-                    経度:
-                  </span>
-                  <span className="text-gray-800 font-mono">
-                    {clickedLocation.lng.toFixed(6)}
-                  </span>
-                </div>
+              <div className="space-y-3">
+                {diaries.map((diary) => (
+                  <div
+                    key={diary.id}
+                    className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => handleDiaryClick(diary)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-800 mb-1">
+                          {diary.title}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                          {diary.content.length > 100
+                            ? `${diary.content.substring(0, 100)}...`
+                            : diary.content}
+                        </p>
+                        <div className="flex items-center gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <FaMapMarkerAlt />
+                            {Number(diary.latitude).toFixed(4)},{" "}
+                            {Number(diary.longitude).toFixed(4)}
+                          </span>
+                          <span>
+                            {new Date(diary.created_at).toLocaleDateString(
+                              "ja-JP"
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 ml-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDiaryClick(diary);
+                          }}
+                          className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="編集"
+                        >
+                          <FaEdit size={14} />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDiary(diary.id);
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                          title="削除"
+                        >
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="mt-4 p-3 bg-blue-100 bg-opacity-60 rounded-lg">
-                <p className="text-xs text-blue-700">
-                  💡 次のステップで、この場所に日記を作成する機能を追加予定
-                </p>
-              </div>
+            </div>
+          )}
+
+          {/* 日記作成フォーム */}
+          {showForm && (
+            <div className="mb-6">
+              <DiaryForm
+                onSubmit={handleModalSubmit}
+                onCancel={() => {
+                  setShowForm(false);
+                  setClickedLocation(null); // クリック位置のピンを削除
+                  setEditingDiary(null);
+                }}
+                clickedLocation={clickedLocation}
+                editingDiary={editingDiary}
+                isLoading={isLoading}
+              />
             </div>
           )}
         </div>
