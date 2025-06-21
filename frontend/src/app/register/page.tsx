@@ -53,7 +53,7 @@ export default function RegisterPage() {
       {registerAttempted && showLoading && <LoadingModal message="作成中..." />}
       <Header />
       <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md sm:max-w-xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
+        <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
           <div className="flex items-center gap-2 mb-6">
             <FaUserPlus className="text-2xl text-blue-500" />
             <h1 className="text-xl sm:text-2xl font-bold tracking-wide text-blue-900">
