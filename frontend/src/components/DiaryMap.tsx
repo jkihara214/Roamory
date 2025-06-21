@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MapClickEvent } from "@/types/diary";
+import { MapClickEvent, TravelDiary } from "@/types/diary";
 import { getDefaultTileProvider, mapConfig } from "@/config/mapConfig";
 
 interface DiaryMapProps {
   onMapClick: (event: MapClickEvent) => void;
+  diaries?: TravelDiary[];
+  onDiaryClick?: (diary: TravelDiary) => void;
+  clickedLocation?: MapClickEvent | null;
 }
 
 // Leaflet の型定義
@@ -15,17 +18,116 @@ declare global {
   }
 }
 
-export default function DiaryMap({ onMapClick }: DiaryMapProps) {
+export default function DiaryMap({
+  onMapClick,
+  diaries = [],
+  onDiaryClick,
+  clickedLocation,
+}: DiaryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<any>(null);
   const onMapClickRef = useRef(onMapClick);
+  const onDiaryClickRef = useRef(onDiaryClick);
+  const markersRef = useRef<any[]>([]);
+  const clickedMarkerRef = useRef<any>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
   // refの値を更新
   useEffect(() => {
     onMapClickRef.current = onMapClick;
-  }, [onMapClick]);
+    onDiaryClickRef.current = onDiaryClick;
+  }, [onMapClick, onDiaryClick]);
+
+  // 日記のピンを更新
+  useEffect(() => {
+    if (!leafletMapRef.current || !window.L) return;
+
+    // 既存のマーカーを削除
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    // 新しいマーカーを追加
+    diaries.forEach((diary) => {
+      const marker = window.L.marker([diary.latitude, diary.longitude], {
+        icon: window.L.divIcon({
+          html: `<svg viewBox="0 0 384 512" width="20" height="20" fill="#3B82F6" style="display: block;">
+                   <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
+                 </svg>`,
+          iconSize: [20, 20],
+          className: "diary-marker",
+          iconAnchor: [10, 20],
+          popupAnchor: [0, -25], // ポップアップをピンから25px上に表示
+        }),
+      })
+        .addTo(leafletMapRef.current)
+        .bindPopup(
+          `
+        <div class="diary-popup">
+          <h3 class="font-bold text-sm mb-1">${diary.title}</h3>
+          <p class="text-xs text-gray-600 mb-2">${diary.content?.substring(
+            0,
+            100
+          )}${diary.content?.length > 100 ? "..." : ""}</p>
+          <p class="text-xs text-gray-500">${new Date(
+            diary.created_at
+          ).toLocaleDateString("ja-JP")}</p>
+        </div>
+      `
+        )
+        .on("click", () => {
+          if (onDiaryClickRef.current) {
+            onDiaryClickRef.current(diary);
+          }
+        });
+
+      markersRef.current.push(marker);
+    });
+  }, [diaries]);
+
+  // クリック位置のピンを更新
+  useEffect(() => {
+    if (!leafletMapRef.current || !window.L) return;
+
+    // 既存のクリックマーカーを削除
+    if (clickedMarkerRef.current) {
+      clickedMarkerRef.current.remove();
+      clickedMarkerRef.current = null;
+    }
+
+    // 新しいクリック位置にマーカーを追加
+    if (clickedLocation) {
+      const clickedMarker = window.L.marker(
+        [clickedLocation.lat, clickedLocation.lng],
+        {
+          icon: window.L.divIcon({
+            html: `<svg viewBox="0 0 384 512" width="24" height="24" fill="#EF4444" style="display: block;">
+                     <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
+                   </svg>`,
+            iconSize: [22, 22],
+            className: "clicked-marker",
+            iconAnchor: [11, 22],
+            popupAnchor: [0, -20], // ポップアップをピンから20px上に表示
+          }),
+        }
+      )
+        .addTo(leafletMapRef.current)
+        .bindPopup(
+          `
+        <div class="clicked-popup">
+          <h3 class="font-bold text-sm mb-1">新しい日記</h3>
+          <p class="text-xs text-gray-600">この場所に日記を作成します</p>
+          <p class="text-xs text-gray-500">座標: ${clickedLocation.lat.toFixed(
+            6
+          )}, ${clickedLocation.lng.toFixed(6)}</p>
+        </div>
+      `
+        )
+        .openPopup(); // 自動的にポップアップを開く
+
+      clickedMarkerRef.current = clickedMarker;
+    }
+  }, [clickedLocation]);
 
   useEffect(() => {
     const loadLeaflet = () => {
@@ -157,7 +259,7 @@ export default function DiaryMap({ onMapClick }: DiaryMapProps) {
           <div className="text-xs lg:text-sm text-gray-700 space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-blue-500">🖱️</span>
-              <span>地図をクリック → 座標を取得</span>
+              <span>地図をクリック → ピン表示・日記作成</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-green-500">🔍</span>
