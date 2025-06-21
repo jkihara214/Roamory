@@ -39,6 +39,14 @@ export default function Header() {
                   ダッシュボード
                 </Link>
                 <Link
+                  href="/diary"
+                  className={`whitespace-nowrap hover:text-orange-500 transition ${
+                    pathname === "/diary" ? "underline" : ""
+                  }`}
+                >
+                  旅の日記
+                </Link>
+                <Link
                   href="/travel-plan"
                   className={`whitespace-nowrap hover:text-orange-500 transition ${
                     pathname === "/travel-plan" ? "underline" : ""
@@ -69,7 +77,7 @@ export default function Header() {
               </button>
               {/* スマホ用メニュー */}
               {menuOpen && (
-                <div className="fixed inset-0 z-50 flex">
+                <div className="fixed inset-0 z-[1100] flex">
                   {/* 透過オーバーレイ（左側） */}
                   <div
                     className="flex-1 bg-black/40"
@@ -92,6 +100,15 @@ export default function Header() {
                       onClick={() => setMenuOpen(false)}
                     >
                       ダッシュボード
+                    </Link>
+                    <Link
+                      href="/diary"
+                      className={`whitespace-nowrap hover:text-orange-500 transition ${
+                        pathname === "/diary" ? "underline" : ""
+                      }`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      旅の日記
                     </Link>
                     <Link
                       href="/travel-plan"
