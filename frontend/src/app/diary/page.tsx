@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
+import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import {
   FaBook,
   FaMapMarkerAlt,
@@ -36,6 +37,9 @@ export default function DiaryPage() {
   const [editingDiary, setEditingDiary] = useState<TravelDiary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingDiary, setDeletingDiary] = useState<TravelDiary | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchMe();
@@ -129,19 +133,34 @@ export default function DiaryPage() {
     }
   };
 
-  const handleDeleteDiary = async (id: number) => {
-    if (!confirm("この日記を削除しますか？")) return;
+  const handleDeleteClick = (diary: TravelDiary) => {
+    setDeletingDiary(diary);
+    setShowDeleteModal(true);
+  };
 
+  const handleDeleteConfirm = async () => {
+    if (!deletingDiary) return;
+
+    setIsDeleting(true);
     try {
-      await deleteTravelDiary(id);
-      setDiaries(diaries.filter((d) => d.id !== id));
+      await deleteTravelDiary(deletingDiary.id);
+      setDiaries(diaries.filter((d) => d.id !== deletingDiary.id));
+      setShowDeleteModal(false);
+      setDeletingDiary(null);
     } catch (err) {
       let message = "日記の削除に失敗しました";
       if (isAxiosError(err) && err.response?.data?.message) {
         message = err.response.data.message;
       }
       setError(message);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setDeletingDiary(null);
   };
 
   const handleModalSubmit = (data: {
@@ -160,6 +179,13 @@ export default function DiaryPage() {
   return (
     <>
       {isAuthLoading && <AuthLoadingModal />}
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title={deletingDiary?.title || ""}
+        isLoading={isDeleting}
+      />
       <Header />
       <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
@@ -251,7 +277,7 @@ export default function DiaryPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDeleteDiary(diary.id);
+                            handleDeleteClick(diary);
                           }}
                           className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
                           title="削除"

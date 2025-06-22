@@ -31,6 +31,30 @@ describe("Header", () => {
     expect(screen.getByRole("link", { name: "新規登録" })).toBeInTheDocument();
   });
 
+  it("未ログイン時もバーガーメニューボタンが表示される", () => {
+    mockState.isAuthenticated = false;
+    render(<Header />);
+    expect(screen.getByLabelText("メニューを開く")).toBeInTheDocument();
+  });
+
+  it("未ログイン時にバーガーメニューをクリックするとメニューが表示される", () => {
+    mockState.isAuthenticated = false;
+    render(<Header />);
+
+    // 初期状態ではメニューは表示されない
+    expect(screen.queryByLabelText("メニューを閉じる")).not.toBeInTheDocument();
+
+    // バーガーメニューをクリック
+    const menuButton = screen.getByLabelText("メニューを開く");
+    fireEvent.click(menuButton);
+
+    // メニューが表示される
+    expect(screen.getByLabelText("メニューを閉じる")).toBeInTheDocument();
+    // メニュー内にログイン・新規登録ボタンが表示される
+    expect(screen.getAllByRole("link", { name: "ログイン" })).toHaveLength(2); // PC用とメニュー用
+    expect(screen.getAllByRole("link", { name: "新規登録" })).toHaveLength(2); // PC用とメニュー用
+  });
+
   it("ログイン時はダッシュボード・旅行プラン生成・ログアウトボタンが表示される", () => {
     mockState.isAuthenticated = true;
     render(<Header />);

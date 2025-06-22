@@ -3,7 +3,7 @@ import { FaPlane } from "react-icons/fa";
 
 export default function LoadingModal({ message = "処理中..." }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-blue-100/60">
+    <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-blue-100/60">
       <style>
         {`
           @keyframes flyAway {
