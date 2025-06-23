@@ -31,6 +31,10 @@ export const register = (data: {
 export const login = (data: { email: string; password: string }) =>
   api.post("/v1/login", data);
 
+// メール認証再送信（未認証ユーザー向け）
+export const resendVerificationEmailForUnverified = (data: { email: string }) =>
+  api.post("/v1/email/resend-unverified", data);
+
 // ============================================
 // 公開API（認証不要）
 // ============================================
