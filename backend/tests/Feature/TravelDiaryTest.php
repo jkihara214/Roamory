@@ -13,7 +13,9 @@ class TravelDiaryTest extends TestCase
 
     public function test_user_can_create_travel_diary()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         $payload = [
@@ -40,8 +42,12 @@ class TravelDiaryTest extends TestCase
 
     public function test_user_can_get_their_travel_diaries()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $otherUser = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         // ユーザーの日記を作成
@@ -66,7 +72,9 @@ class TravelDiaryTest extends TestCase
 
     public function test_user_can_update_their_travel_diary()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         $diary = TravelDiary::factory()->create([
@@ -90,8 +98,12 @@ class TravelDiaryTest extends TestCase
 
     public function test_user_cannot_update_other_users_diary()
     {
-        $user = User::factory()->create();
-        $otherUser = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $otherUser = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         $diary = TravelDiary::factory()->create([
@@ -110,7 +122,9 @@ class TravelDiaryTest extends TestCase
 
     public function test_user_can_delete_their_travel_diary()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         $diary = TravelDiary::factory()->create([
@@ -126,7 +140,9 @@ class TravelDiaryTest extends TestCase
 
     public function test_validation_errors_for_invalid_data()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
 
         // 緯度が範囲外
@@ -165,4 +181,6 @@ class TravelDiaryTest extends TestCase
         ]);
         $response->assertStatus(401);
     }
+
+
 } 
