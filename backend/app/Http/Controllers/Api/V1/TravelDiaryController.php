@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\TravelDiary;
+use App\Http\Requests\StoreTravelDiaryRequest;
+use App\Http\Requests\UpdateTravelDiaryRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
@@ -24,15 +26,8 @@ class TravelDiaryController extends Controller
     /**
      * 日記を作成
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreTravelDiaryRequest $request): JsonResponse
     {
-        $request->validate([
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'title' => 'required|string|max:255',
-            'content' => 'required|string|max:10000',
-        ]);
-
         $diary = TravelDiary::create([
             'user_id' => $request->user()->id,
             'latitude' => $request->latitude,
@@ -58,15 +53,8 @@ class TravelDiaryController extends Controller
     /**
      * 日記を更新
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateTravelDiaryRequest $request, int $id): JsonResponse
     {
-        $request->validate([
-            'latitude' => 'sometimes|required|numeric|between:-90,90',
-            'longitude' => 'sometimes|required|numeric|between:-180,180',
-            'title' => 'sometimes|required|string|max:255',
-            'content' => 'sometimes|required|string|max:10000',
-        ]);
-
         $diary = TravelDiary::where('user_id', $request->user()->id)
             ->findOrFail($id);
 

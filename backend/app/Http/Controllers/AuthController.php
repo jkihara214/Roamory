@@ -9,16 +9,15 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
 use App\Models\User;
+use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\LoginRequest;
+use App\Http\Requests\ResendVerificationEmailRequest;
 
 class AuthController extends Controller
 {
-    public function register(Request $request)
+    public function register(RegisterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+        $validated = $request->validated();
 
         $user = User::create([
             'name' => $validated['name'],
@@ -34,12 +33,9 @@ class AuthController extends Controller
         ], 201);
     }
 
-    public function login(Request $request)
+    public function login(LoginRequest $request)
     {
-        $credentials = $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $credentials = $request->validated();
 
         // ログイン試行回数制限（IPアドレスベース）
         $key = 'login_attempts_' . $request->ip();
@@ -137,13 +133,11 @@ class AuthController extends Controller
     /**
      * メール認証の再送信（未認証ユーザー向け）
      */
-    public function resendVerificationEmailForUnverified(Request $request)
+    public function resendVerificationEmailForUnverified(ResendVerificationEmailRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-        ]);
+        $validated = $request->validated();
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $validated['email'])->first();
 
         if (!$user) {
             return response()->json([

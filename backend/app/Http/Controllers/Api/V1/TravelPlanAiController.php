@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\GenerateTravelPlanRequest;
 use Illuminate\Support\Facades\Http;
 use App\Models\UsageHistory;
 use Carbon\Carbon;
@@ -12,17 +12,8 @@ use App\Models\Country;
 
 class TravelPlanAiController extends Controller
 {
-    public function generate(Request $request)
+    public function generate(GenerateTravelPlanRequest $request)
     {
-        $request->validate([
-            'country' => 'required|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'budget' => 'required|integer',
-            'must_go_places' => 'array',
-            'must_go_places.*' => 'string',
-        ]);
-
         $user = $request->user();
         $today = Carbon::today();
         // 今日のtravel_plans_ai利用回数をカウント
@@ -103,7 +94,7 @@ class TravelPlanAiController extends Controller
         ]);
     }
 
-    private function buildPrompt(Request $request): string
+    private function buildPrompt(GenerateTravelPlanRequest $request): string
     {
         $base = <<<EOT
 あなたはプロの旅行プランナーです。
