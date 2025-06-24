@@ -113,6 +113,18 @@ export default function DiaryPage() {
   }) => {
     if (!editingDiary) return;
 
+    // 更新対象の日記がまだ存在するかチェック
+    const existingDiary = diaries.find((d) => d.id === editingDiary.id);
+    if (!existingDiary) {
+      setError(
+        "編集対象の日記が見つかりません。既に削除されている可能性があります。"
+      );
+      setShowForm(false);
+      setEditingDiary(null);
+      setClickedLocation(null);
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
@@ -145,6 +157,14 @@ export default function DiaryPage() {
     try {
       await deleteTravelDiary(deletingDiary.id);
       setDiaries(diaries.filter((d) => d.id !== deletingDiary.id));
+
+      // 削除対象の日記が現在編集中の日記と同じ場合は、編集フォームを閉じる
+      if (editingDiary && editingDiary.id === deletingDiary.id) {
+        setShowForm(false);
+        setEditingDiary(null);
+        setClickedLocation(null);
+      }
+
       setShowDeleteModal(false);
       setDeletingDiary(null);
     } catch (err) {
