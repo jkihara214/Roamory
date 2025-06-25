@@ -11,7 +11,7 @@ echo ""
 
 # テスト専用の環境変数を設定
 export APP_ENV=testing
-export APP_KEY=***REMOVED***
+export APP_KEY=$(php artisan key:generate --show)  # 動的生成
 export DB_CONNECTION=sqlite
 export DB_DATABASE=:memory:
 export CACHE_DRIVER=array
