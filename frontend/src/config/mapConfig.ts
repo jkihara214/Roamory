@@ -39,8 +39,6 @@ export const tileProviders: Record<string, TileProvider> = {
 
 // デフォルト設定（環境に応じて切り替え）
 export const getDefaultTileProvider = (): TileProvider => {
-  const env = process.env.NODE_ENV;
-
   // 開発環境ではOpenStreetMap
   return tileProviders.openstreetmap;
 };
@@ -64,7 +62,7 @@ export const mapConfig = {
   appInfo: {
     name: "Roamory",
     version: "1.0.0",
-    contact: "https://github.com/your-username/roamory", // 実際の連絡先に変更
+    contact: "https://github.com/jkihara214/Roamory", // 実際の連絡先に変更
     userAgent: "Roamory/1.0.0", // User-Agent識別用
   },
 };

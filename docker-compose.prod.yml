@@ -25,6 +25,16 @@ services:
       - DB_DATABASE=${DB_DATABASE}
       - DB_USERNAME=${DB_USERNAME}
       - DB_PASSWORD=${DB_PASSWORD}
+      # AWS SES Configuration
+      - MAIL_MAILER=ses
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-northeast-1}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@roamory.com}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Roamory}
+      - FRONTEND_URL=https://roamory.com
+    depends_on:
+      - db
     command: php-fpm
 
   db:
