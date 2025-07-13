@@ -5,7 +5,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
-import { FaEye, FaEyeSlash, FaSignInAlt } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSignInAlt, FaMailBulk } from "react-icons/fa";
 import LoadingModal from "@/components/LoadingModal";
 import { useMinimumLoading } from "@/hooks/useMinimumLoading";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
@@ -19,6 +19,18 @@ export default function LoginPage() {
   const error = useAuthStore((s) => s.error);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const fetchMe = useAuthStore((s) => s.fetchMe);
+  const emailUnverified = useAuthStore((s) => s.emailUnverified);
+  const unverifiedEmail = useAuthStore((s) => s.unverifiedEmail);
+  const resendVerificationEmail = useAuthStore(
+    (s) => s.resendVerificationEmail
+  );
+  const clearEmailUnverifiedState = useAuthStore(
+    (s) => s.clearEmailUnverifiedState
+  );
+  const resendLoading = useAuthStore((s) => s.resendLoading);
+  const resendSuccess = useAuthStore((s) => s.resendSuccess);
+  const resendError = useAuthStore((s) => s.resendError);
+  const clearResendState = useAuthStore((s) => s.clearResendState);
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loginAttempted, setLoginAttempted] = useState(false);
@@ -27,7 +39,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     fetchMe();
-  }, []);
+  }, [fetchMe]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -44,13 +56,88 @@ export default function LoginPage() {
     }
   };
 
+  const handleResendEmail = async () => {
+    clearResendState();
+    if (unverifiedEmail) {
+      await resendVerificationEmail(unverifiedEmail);
+    }
+  };
+
+  const handleBackToLogin = () => {
+    clearEmailUnverifiedState();
+    clearResendState();
+    setEmail("");
+    setPassword("");
+    setLoginAttempted(false);
+  };
+
+  // メール未認証状態の場合の表示
+  if (emailUnverified) {
+    return (
+      <>
+        <Header />
+        <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
+          <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-orange-100">
+            <div className="flex items-center gap-2 mb-6">
+              <FaMailBulk className="text-2xl text-orange-500" />
+              <h1 className="text-xl sm:text-2xl font-bold tracking-wide text-orange-900">
+                メール認証が必要です
+              </h1>
+            </div>
+
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+              <p className="text-orange-800 mb-3">
+                ログインするには、メールアドレスの認証が必要です。
+              </p>
+              <p className="text-sm text-orange-700 mb-3">
+                送信先: <strong>{unverifiedEmail}</strong>
+              </p>
+              <p className="text-sm text-orange-600">
+                認証メール内のリンクをクリックしてメール認証を完了してください。
+              </p>
+            </div>
+
+            {resendSuccess && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                <p className="text-green-800 text-sm">{resendSuccess}</p>
+              </div>
+            )}
+
+            {resendError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                <p className="text-red-700 text-sm">{resendError}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleResendEmail}
+                disabled={resendLoading}
+                className="w-full bg-gradient-to-r from-orange-500 to-yellow-400 hover:from-orange-600 hover:to-yellow-500 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200 disabled:opacity-50"
+              >
+                {resendLoading ? "送信中..." : "認証メールを再送信"}
+              </button>
+
+              <button
+                onClick={handleBackToLogin}
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200"
+              >
+                ログイン画面に戻る
+              </button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       {isAuthLoading && <AuthLoadingModal />}
       {loginAttempted && showLoading && <LoadingModal message="確認中..." />}
       <Header />
       <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md sm:max-w-xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
+        <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
           <div className="flex items-center gap-2 mb-6">
             <FaSignInAlt className="text-2xl text-blue-500" />
             <h1 className="text-xl sm:text-2xl font-bold tracking-wide text-blue-900">

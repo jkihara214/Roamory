@@ -1,0 +1,54 @@
+# version: "3.9"
+
+services:
+  nginx:
+    image: nginx:stable
+    container_name: app-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./backend:/var/www/html:ro
+    depends_on:
+      - php
+
+  php:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ./backend:/var/www/html
+    environment:
+      - APP_ENV=${APP_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      # AWS SES Configuration
+      - MAIL_MAILER=ses
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-northeast-1}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@roamory.com}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Roamory}
+      - FRONTEND_URL=https://roamory.com
+    depends_on:
+      - db
+    command: php-fpm
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    # 本番ではセキュリティのためポートを公開しない（外部接続不要な場合）
+    # ports:
+    #   - "5432:5432"
+
+volumes:
+  db-data:

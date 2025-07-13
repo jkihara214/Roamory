@@ -31,7 +31,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_with_places_success()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         $this->fakeGeminiApi();
 
@@ -59,7 +61,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_without_places_success()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         $this->fakeGeminiApi();
 
@@ -87,7 +91,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_validation_error()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         $this->fakeGeminiApi();
 
@@ -132,7 +138,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_limit_exceeded()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         $this->fakeGeminiApi();
         Country::create([
@@ -159,7 +167,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_gemini_api_failure()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         Http::fake(['*' => Http::response([], 500)]);
         Country::create([
@@ -181,7 +191,9 @@ class TravelPlanAiTest extends TestCase
 
     public function test_generate_plan_country_not_found()
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
         $token = $user->createToken('api-token')->plainTextToken;
         $this->fakeGeminiApi();
         // Countryデータを作成しない
@@ -193,7 +205,9 @@ class TravelPlanAiTest extends TestCase
         ];
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
             ->postJson('/api/v1/travel-plans/generate', $payload);
-        $response->assertStatus(500);
-        // 今後は「国が見つからない」旨のエラー返却に改善しても良い
+        $response->assertStatus(422)
+            ->assertJsonPath('error', '指定された国「日本」が見つかりません。正しい国名を入力してください。');
     }
+
+
 } 

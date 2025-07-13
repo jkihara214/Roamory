@@ -25,6 +25,14 @@ services:
       - DB_DATABASE=roamory_db
       - DB_USERNAME=roamory_user
       - DB_PASSWORD=roamory_pass
+      # AWS SES Configuration
+      - MAIL_MAILER=ses
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-ap-northeast-1}
+      - MAIL_FROM_ADDRESS=${MAIL_FROM_ADDRESS:-noreply@roamory.com}
+      - MAIL_FROM_NAME=Roamory
+      - FRONTEND_URL=http://localhost:3000
     depends_on:
       - db
     working_dir: /var/www/html

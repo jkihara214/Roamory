@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1", // .env.localで上書き可
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api", // .env.localで上書き可
   headers: {
     "Content-Type": "application/json",
   },
@@ -18,29 +18,69 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 認証API
+// ============================================
+// 認証関連API（認証不要）
+// ============================================
 export const register = (data: {
   name: string;
   email: string;
   password: string;
   password_confirmation: string;
-}) => api.post("/register", data);
+}) => api.post("/v1/register", data);
 
 export const login = (data: { email: string; password: string }) =>
-  api.post("/login", data);
+  api.post("/v1/login", data);
 
-export const getMe = () => api.get("/me");
+// メール認証再送信（未認証ユーザー向け）
+export const resendVerificationEmailForUnverified = (data: { email: string }) =>
+  api.post("/v1/email/resend-unverified", data);
 
-export const logout = () => api.post("/logout");
+// ============================================
+// 公開API（認証不要）
+// ============================================
+export const getCountries = () => api.get("/v1/countries");
 
-export const getCountries = () => api.get("/countries");
+// ============================================
+// 認証が必要なAPI
+// ============================================
 
+// ユーザー関連
+export const getMe = () => api.get("/v1/me");
+export const logout = () => api.post("/v1/logout");
+
+// 旅行プラン生成
 export const generateTravelPlan = (data: {
   country: string;
   start_date: string;
   end_date: string;
   budget: number | string;
   must_go_places?: string[];
-}) => api.post("/travel-plans/generate", data);
+}) => api.post("/v1/travel-plans/generate", data);
+
+// 旅行日記（RESTful リソース）
+export const getTravelDiaries = () => api.get("/v1/travel-diaries");
+
+export const createTravelDiary = (data: {
+  latitude: number;
+  longitude: number;
+  title: string;
+  content: string;
+}) => api.post("/v1/travel-diaries", data);
+
+export const getTravelDiary = (id: number) =>
+  api.get(`/v1/travel-diaries/${id}`);
+
+export const updateTravelDiary = (
+  id: number,
+  data: {
+    latitude?: number;
+    longitude?: number;
+    title?: string;
+    content?: string;
+  }
+) => api.put(`/v1/travel-diaries/${id}`, data);
+
+export const deleteTravelDiary = (id: number) =>
+  api.delete(`/v1/travel-diaries/${id}`);
 
 export default api;

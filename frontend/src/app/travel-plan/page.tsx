@@ -11,6 +11,7 @@ import { getCountries, generateTravelPlan } from "@/lib/api";
 import LoadingModal from "@/components/LoadingModal";
 import ReactMarkdown from "react-markdown";
 import type { HTMLAttributes } from "react";
+import { isAxiosError } from "axios";
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -78,10 +79,9 @@ export default function TravelPlanPage() {
         must_go_places: places.length > 0 ? places : undefined,
       });
       setResult({ plan: res.data.plan });
-    } catch (err: any) {
-      // エラーハンドリング
+    } catch (err: unknown) {
       let msg = "予期せぬエラーが発生しました";
-      if (err?.response?.data?.error) {
+      if (isAxiosError(err) && err.response?.data?.error) {
         msg = err.response.data.error;
       }
       setError(msg);
@@ -97,7 +97,7 @@ export default function TravelPlanPage() {
       {loading && <LoadingModal message="プランを生成中..." />}
       <Header />
       <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md sm:max-w-xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
+        <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
           <div className="flex items-center gap-2 mb-6">
             <FaMapMarkedAlt className="text-2xl text-blue-500" />
             <h1 className="text-2xl font-bold tracking-wide text-blue-900">
@@ -156,6 +156,7 @@ export default function TravelPlanPage() {
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
+                  autoComplete="off"
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";
@@ -190,6 +191,7 @@ export default function TravelPlanPage() {
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
+                  autoComplete="off"
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";

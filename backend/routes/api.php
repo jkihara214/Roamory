@@ -22,10 +22,32 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::prefix('v1')->group(function () {
+    // 認証関連API（認証不要）
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
-    Route::middleware('auth:sanctum')->get('/me', [AuthController::class, 'me']);
-    Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
-    Route::middleware('auth:sanctum')->post('/travel-plans/generate', [TravelPlanAiController::class, 'generate']);
+    
+    // メール認証（認証不要）
+    Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->name('verification.verify');
+    Route::post('/email/resend-unverified', [AuthController::class, 'resendVerificationEmailForUnverified']);
+    
+    // 公開API（認証不要）
     Route::get('/countries', [CountryController::class, 'index']);
+    
+    // 認証が必要なAPI
+    Route::middleware('auth:sanctum')->group(function () {
+        // ユーザー関連
+        Route::get('/me', [AuthController::class, 'me']);
+        Route::post('/logout', [AuthController::class, 'logout']);
+        
+        // メール認証関連
+        Route::post('/email/resend', [AuthController::class, 'resendVerificationEmail']);
+        Route::get('/email/verification-status', [AuthController::class, 'checkEmailVerification']);
+        
+        // 旅行プラン生成
+        Route::post('/travel-plans/generate', [TravelPlanAiController::class, 'generate']);
+        
+        // 旅行日記（RESTful リソース）
+        Route::apiResource('travel-diaries', \App\Http\Controllers\Api\V1\TravelDiaryController::class);
+    });
 });
