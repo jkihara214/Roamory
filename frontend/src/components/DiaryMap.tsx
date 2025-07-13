@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import * as L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import { getDefaultTileProvider, mapConfig } from "@/config/mapConfig";
 
@@ -11,13 +13,6 @@ interface DiaryMapProps {
   clickedLocation?: MapClickEvent | null;
 }
 
-// Leaflet の型定義
-declare global {
-  interface Window {
-    L: any;
-  }
-}
-
 export default function DiaryMap({
   onMapClick,
   diaries = [],
@@ -25,11 +20,11 @@ export default function DiaryMap({
   clickedLocation,
 }: DiaryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const leafletMapRef = useRef<any>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
   const onMapClickRef = useRef(onMapClick);
   const onDiaryClickRef = useRef(onDiaryClick);
-  const markersRef = useRef<any[]>([]);
-  const clickedMarkerRef = useRef<any>(null);
+  const markersRef = useRef<L.Marker[]>([]);
+  const clickedMarkerRef = useRef<L.Marker | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
 
@@ -41,7 +36,7 @@ export default function DiaryMap({
 
   // 日記のピンを更新
   useEffect(() => {
-    if (!leafletMapRef.current || !window.L) return;
+    if (!leafletMapRef.current) return;
 
     // 既存のマーカーを削除
     markersRef.current.forEach((marker) => marker.remove());
@@ -49,8 +44,8 @@ export default function DiaryMap({
 
     // 新しいマーカーを追加
     diaries.forEach((diary) => {
-      const marker = window.L.marker([diary.latitude, diary.longitude], {
-        icon: window.L.divIcon({
+      const marker = L.marker([diary.latitude, diary.longitude], {
+        icon: L.divIcon({
           html: `<svg viewBox="0 0 384 512" width="20" height="20" fill="#3B82F6" style="display: block;">
                    <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
                  </svg>`,
@@ -60,7 +55,7 @@ export default function DiaryMap({
           popupAnchor: [0, -25], // ポップアップをピンから25px上に表示
         }),
       })
-        .addTo(leafletMapRef.current)
+        .addTo(leafletMapRef.current!)
         .bindPopup(
           `
         <div class="diary-popup">
@@ -87,7 +82,7 @@ export default function DiaryMap({
 
   // クリック位置のピンを更新
   useEffect(() => {
-    if (!leafletMapRef.current || !window.L) return;
+    if (!leafletMapRef.current) return;
 
     // 既存のクリックマーカーを削除
     if (clickedMarkerRef.current) {
@@ -97,10 +92,10 @@ export default function DiaryMap({
 
     // 新しいクリック位置にマーカーを追加
     if (clickedLocation) {
-      const clickedMarker = window.L.marker(
+      const clickedMarker = L.marker(
         [clickedLocation.lat, clickedLocation.lng],
         {
-          icon: window.L.divIcon({
+          icon: L.divIcon({
             html: `<svg viewBox="0 0 384 512" width="24" height="24" fill="#EF4444" style="display: block;">
                      <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
                    </svg>`,
@@ -111,7 +106,7 @@ export default function DiaryMap({
           }),
         }
       )
-        .addTo(leafletMapRef.current)
+        .addTo(leafletMapRef.current!)
         .bindPopup(
           `
         <div class="clicked-popup">
@@ -130,37 +125,14 @@ export default function DiaryMap({
   }, [clickedLocation]);
 
   useEffect(() => {
-    const loadLeaflet = () => {
-      if (window.L) {
-        initializeMap();
-        return;
-      }
-
-      // Leaflet CSS
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
-      link.crossOrigin = "";
-      document.head.appendChild(link);
-
-      // Leaflet JS
-      const script = document.createElement("script");
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.integrity = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
-      script.crossOrigin = "";
-      script.onload = initializeMap;
-      document.head.appendChild(script);
-    };
-
     const initializeMap = () => {
-      if (!mapRef.current || !window.L) return;
+      if (!mapRef.current) return;
 
       // 既に初期化されている場合はスキップ
       if (leafletMapRef.current) return;
 
       // 地図初期化
-      const map = window.L.map(mapRef.current, {
+      const map = L.map(mapRef.current, {
         center: mapConfig.center,
         zoom: mapConfig.zoom,
         minZoom: mapConfig.minZoom,
@@ -175,7 +147,7 @@ export default function DiaryMap({
       const tileProvider = getDefaultTileProvider();
 
       // メインタイルレイヤー
-      const mainTileLayer = window.L.tileLayer(tileProvider.url, {
+      const mainTileLayer = L.tileLayer(tileProvider.url, {
         attribution: tileProvider.attribution,
         maxZoom: tileProvider.maxZoom,
         // 規約対応: User-Agent設定（Leafletが自動的に適切なUser-Agentを設定）
@@ -190,20 +162,20 @@ export default function DiaryMap({
       leafletMapRef.current = map;
 
       // 地図クリックイベント（refを使用）
-      map.on("click", (e: any) => {
+      map.on("click", (e: L.LeafletMouseEvent) => {
         if (typeof onMapClickRef.current === "function") {
           onMapClickRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
         }
       });
 
       // エラーハンドリング（タイル読み込みエラー）
-      mainTileLayer.on("tileerror", (e: any) => {
+      mainTileLayer.on("tileerror", (e: L.TileErrorEvent) => {
         console.warn("Tile loading error:", e);
         // 必要に応じて代替タイルプロバイダーに切り替える処理をここに追加
       });
     };
 
-    loadLeaflet();
+    initializeMap();
 
     // クリーンアップ処理
     return () => {

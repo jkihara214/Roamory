@@ -1,20 +1,27 @@
 "use client";
 import React, { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import Header from "@/components/Header";
-import DiaryMap from "@/components/DiaryMap";
 import DiaryForm from "@/components/DiaryForm";
+
+// DiaryMapを動的インポートしてサーバーサイドレンダリングを無効化
+const DiaryMap = dynamic(() => import("@/components/DiaryMap"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-[380px] md:h-[450px] lg:h-[513px] rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500 mx-auto mb-2"></div>
+        <p className="text-gray-600 text-sm">地図を読み込み中...</p>
+      </div>
+    </div>
+  ),
+});
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import {
-  FaBook,
-  FaMapMarkerAlt,
-  FaPlus,
-  FaTrash,
-  FaEdit,
-} from "react-icons/fa";
+import { FaBook, FaMapMarkerAlt, FaTrash, FaEdit } from "react-icons/fa";
 import {
   getTravelDiaries,
   createTravelDiary,
