@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
-use Illuminate\Auth\Notifications\VerifyEmail;
+use App\Notifications\VerifyEmailJapanese;
 use Tests\TestCase;
 use App\Models\User;
 
@@ -31,7 +31,7 @@ class AuthTest extends TestCase
         
         // メール認証通知が送信されたことを確認
         $user = User::where('email', 'test@example.com')->first();
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailJapanese::class);
     }
 
     public function test_register_validation_error()
@@ -232,7 +232,7 @@ class AuthTest extends TestCase
         $response->assertStatus(200)
             ->assertJson(['message' => '認証メールを再送信しました。']);
 
-        Notification::assertSentTo($user, VerifyEmail::class);
+        Notification::assertSentTo($user, VerifyEmailJapanese::class);
     }
 
     public function test_resend_verification_email_for_nonexistent_user()
