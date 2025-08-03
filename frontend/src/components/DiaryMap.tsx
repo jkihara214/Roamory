@@ -1,16 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import * as L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import { getDefaultTileProvider, mapConfig } from "@/config/mapConfig";
+import { getVisitedCountryCodes } from "@/lib/api";
 
 interface DiaryMapProps {
   onMapClick: (event: MapClickEvent) => void;
   diaries?: TravelDiary[];
   onDiaryClick?: (diary: TravelDiary) => void;
   clickedLocation?: MapClickEvent | null;
+  showVisitedCountries?: boolean;
 }
 
 export default function DiaryMap({
@@ -18,6 +20,7 @@ export default function DiaryMap({
   diaries = [],
   onDiaryClick,
   clickedLocation,
+  showVisitedCountries = false,
 }: DiaryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -25,8 +28,11 @@ export default function DiaryMap({
   const onDiaryClickRef = useRef(onDiaryClick);
   const markersRef = useRef<L.Marker[]>([]);
   const clickedMarkerRef = useRef<L.Marker | null>(null);
+  const highlightLayersRef = useRef<L.Rectangle[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [visitedCountryCodes, setVisitedCountryCodes] = useState<string[]>([]);
+  const [countryGeoJson, setCountryGeoJson] = useState<any>(null);
 
   // refの値を更新
   useEffect(() => {
@@ -124,6 +130,104 @@ export default function DiaryMap({
     }
   }, [clickedLocation]);
 
+  // 国境線データを読み込み
+  useEffect(() => {
+    const loadCountryData = async () => {
+      try {
+        // Natural Earth 110m精度のGeoJSONデータ
+        const worldCountriesResponse = await fetch(
+          "/data/world-countries-110m.geojson"
+        );
+        const worldCountriesData = await worldCountriesResponse.json();
+        setCountryGeoJson(worldCountriesData);
+
+        console.log(
+          `Loaded ${
+            worldCountriesData.features?.length || 0
+          } countries from Natural Earth 110m data`
+        );
+      } catch (error) {
+        console.error("Failed to load Natural Earth 110m data:", error);
+        console.warn("Country highlighting will not be available");
+      }
+    };
+    loadCountryData();
+  }, []);
+
+  // 訪問済み国データを取得
+  useEffect(() => {
+    if (showVisitedCountries) {
+      const fetchVisitedCountries = async () => {
+        try {
+          const response = await getVisitedCountryCodes();
+          setVisitedCountryCodes(response.data.country_codes);
+        } catch (error) {
+          console.error("Failed to fetch visited countries:", error);
+          setVisitedCountryCodes([]);
+        }
+      };
+      fetchVisitedCountries();
+    }
+  }, [showVisitedCountries, diaries]); // diariesの変更も監視
+
+  // 訪問済み国をハイライト表示
+  useEffect(() => {
+    if (!leafletMapRef.current || !showVisitedCountries) return;
+
+    // 既存のハイライトレイヤーを削除
+    highlightLayersRef.current.forEach((layer) => layer.remove());
+    highlightLayersRef.current = [];
+
+    // 訪問済み国をハイライト
+    visitedCountryCodes.forEach((countryCode) => {
+      let countryFound = false;
+
+      // Natural Earth FeatureCollectionからの検索
+      if (countryGeoJson?.features) {
+        const countryFeature = countryGeoJson.features.find((feature: any) => {
+          const props = feature.properties;
+          // 複数のフィールドをチェック（Natural Earthデータの不整合に対応）
+          return (
+            props.ISO_A2 === countryCode ||
+            props.ISO_A2_EH === countryCode || // Enhanced版ISO_A2
+            props.WB_A2 === countryCode ||
+            props.POSTAL === countryCode
+          );
+        });
+
+        if (countryFeature) {
+          countryFound = true;
+          // 実際の国境線を表示
+          const geoJsonLayer = L.geoJSON(countryFeature, {
+            style: {
+              color: "#22c55e",
+              weight: 2,
+              opacity: 0.8,
+              fillColor: "#bbf7d0",
+              fillOpacity: 0.3,
+            },
+            interactive: false, // クリックイベントを地図本体に透過
+          }).addTo(leafletMapRef.current!).bindPopup(`
+              <div class="visited-country-popup">
+                <h3 class="font-bold text-sm mb-1">✈️ 訪問済み</h3>
+                <p class="text-sm text-gray-700">${
+                  countryFeature.properties.NAME_JA ||
+                  countryFeature.properties.NAME
+                }</p>
+                <p class="text-xs text-gray-500 mt-1">実際の国境線で表示</p>
+                <p class="text-xs text-gray-400 mt-1">${
+                  countryFeature.properties.SUBREGION ||
+                  countryFeature.properties.CONTINENT
+                }</p>
+              </div>
+            `);
+
+          highlightLayersRef.current.push(geoJsonLayer as any);
+        }
+      }
+    });
+  }, [visitedCountryCodes, countryGeoJson, showVisitedCountries]);
+
   useEffect(() => {
     const initializeMap = () => {
       if (!mapRef.current) return;
@@ -179,6 +283,10 @@ export default function DiaryMap({
 
     // クリーンアップ処理
     return () => {
+      // ハイライトレイヤーを削除
+      highlightLayersRef.current.forEach((layer) => layer.remove());
+      highlightLayersRef.current = [];
+
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
@@ -187,7 +295,7 @@ export default function DiaryMap({
   }, []); // 依存配列を空にして初期化時のみ実行
 
   return (
-    <div className="relative">
+    <div className="relative" data-testid="map-container">
       <div
         ref={mapRef}
         className="w-full h-[380px] md:h-[450px] lg:h-[513px] rounded-lg border border-gray-200"
@@ -261,6 +369,26 @@ export default function DiaryMap({
             </button>
           </div>
           <div className="text-xs lg:text-sm text-gray-700 space-y-2">
+            {showVisitedCountries && visitedCountryCodes.length > 0 && (
+              <div className="flex items-start gap-2">
+                <span className="text-green-500 mt-0.5">🗺️</span>
+                <div>
+                  <div className="font-medium text-green-700">
+                    訪問済み国: {visitedCountryCodes.length}カ国
+                  </div>
+                  <div className="text-xs text-gray-600 mt-1">
+                    {countryGeoJson ? (
+                      <>
+                        <span className="text-green-600">●</span> Natural Earth
+                        110m精度で表示
+                      </>
+                    ) : (
+                      "日記を作成した国が自動的に記録されます"
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
             <div className="flex items-start gap-2">
               <span className="text-blue-500 mt-0.5">🌍</span>
               <div>

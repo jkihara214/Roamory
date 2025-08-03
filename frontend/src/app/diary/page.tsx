@@ -250,6 +250,7 @@ export default function DiaryPage() {
               diaries={diaries}
               onDiaryClick={handleDiaryClick}
               clickedLocation={clickedLocation}
+              showVisitedCountries={true}
             />
           </div>
 

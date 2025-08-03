@@ -1,0 +1,17 @@
+{
+  "name": "roamory-scripts",
+  "version": "1.0.0",
+  "description": "Roamory Natural Earth Data Scripts",
+  "main": "index.js",
+  "scripts": {},
+  "dependencies": {},
+  "devDependencies": {},
+  "keywords": [
+    "natural-earth",
+    "geojson",
+    "countries",
+    "mapping"
+  ],
+  "author": "Roamory Team",
+  "license": "MIT"
+}
