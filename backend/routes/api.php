@@ -49,5 +49,9 @@ Route::prefix('v1')->group(function () {
         
         // 旅行日記（RESTful リソース）
         Route::apiResource('travel-diaries', \App\Http\Controllers\Api\V1\TravelDiaryController::class);
+        
+        // 訪問済み国関連
+        Route::get('/countries/visited', [CountryController::class, 'visitedCountries']);
+        Route::get('/countries/visited-codes', [CountryController::class, 'visitedCountryCodes']);
     });
 });
