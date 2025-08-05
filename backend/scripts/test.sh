@@ -42,4 +42,4 @@ else
     echo "❌ テスト完了: 一部のテストが失敗しました (終了コード: $exit_code)"
 fi
 
-exit $exit_code 
+exit $exit_code
