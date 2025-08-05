@@ -23,11 +23,21 @@ class SendDailyUsageReportLineTest extends TestCase
         User::factory()->create(['created_at' => $yesterday]);
         User::factory()->create(['created_at' => $yesterday]);
         
-        // 今月作成されたユーザー（昨日の2人も含む）
-        User::factory()->create(['created_at' => $yesterday->copy()->subDays(5)]);
+        // 今月作成されたユーザー（昨日の2人も含む）- 昨日と同じ月の15日
+        $midMonth = $yesterday->copy()->day(15);
+        // 昨日が15日の場合は10日を使用
+        if ($yesterday->day === 15) {
+            $midMonth = $yesterday->copy()->day(10);
+        }
+        User::factory()->create(['created_at' => $midMonth]);
         
-        // プレミアムユーザー
-        User::factory()->create(['is_premium' => true]);
+        // プレミアムユーザー（今月作成）- 昨日と同じ月の5日（どの月でも確実に存在）
+        $earlyMonth = $yesterday->copy()->day(5);
+        // 昨日が5日の場合は12日を使用
+        if ($yesterday->day === 5) {
+            $earlyMonth = $yesterday->copy()->day(12);
+        }
+        User::factory()->create(['is_premium' => true, 'created_at' => $earlyMonth]);
         
         $command = new SendDailyUsageReportLine();
         
@@ -39,7 +49,7 @@ class SendDailyUsageReportLineTest extends TestCase
         $result = $method->invoke($command, $yesterday);
         
         $this->assertEquals(2, $result['daily_new_users']);
-        $this->assertEquals(4, $result['monthly_new_users']); // 修正: 昨日の2人 + 5日前の1人 + プレミアムユーザー1人 = 4人
+        $this->assertEquals(4, $result['monthly_new_users']); // 修正: 昨日の2人 + 今月15日の1人 + 今月5日のプレミアムユーザー1人 = 4人
         $this->assertEquals(4, $result['total_users']);
         $this->assertEquals(1, $result['premium_users']);
     }
