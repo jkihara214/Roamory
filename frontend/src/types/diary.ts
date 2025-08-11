@@ -12,6 +12,7 @@ export interface TravelDiary {
   longitude: number;
   title: string;
   content: string;
+  visited_at: string;
   created_at: string;
   updated_at: string;
 }

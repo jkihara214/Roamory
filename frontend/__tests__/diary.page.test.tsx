@@ -31,6 +31,7 @@ const mockDiaries: TravelDiary[] = [
     content: "東京タワーに行きました。景色が素晴らしかったです。",
     latitude: 35.6585,
     longitude: 139.7454,
+    visited_at: "2024-01-10T14:00:00Z",
     created_at: "2024-01-15T10:00:00Z",
     updated_at: "2024-01-15T10:00:00Z",
   },
@@ -41,6 +42,7 @@ const mockDiaries: TravelDiary[] = [
     content: "清水寺と金閣寺を巡りました。日本の伝統文化に触れることができました。",
     latitude: 35.0116,
     longitude: 135.7681,
+    visited_at: "2024-01-18T10:00:00Z",
     created_at: "2024-01-20T14:30:00Z",
     updated_at: "2024-01-22T16:45:00Z",
   },
@@ -51,6 +53,7 @@ const mockDiaries: TravelDiary[] = [
     content: "道頓堀でたこ焼きとお好み焼きを満喫しました。",
     latitude: 34.6937,
     longitude: 135.5023,
+    visited_at: "2024-02-08T18:00:00Z",
     created_at: "2024-02-10T12:00:00Z",
     updated_at: "2024-02-10T12:00:00Z",
   },
@@ -153,6 +156,7 @@ describe("DiaryPage (旅の日記画面)", () => {
 
     // フォーム要素が表示される
     expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/訪問日時/)).toBeInTheDocument();
     expect(screen.getByLabelText(/内容/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
 
@@ -205,13 +209,13 @@ describe("DiaryPage (旅の日記画面)", () => {
       expect(screen.getByText("大阪食べ歩き")).toBeInTheDocument();
     });
 
-    it("日記が年月でグループ化されて表示される", async () => {
+    it("日記が訪問日時の年月でグループ化されて表示される", async () => {
       await act(async () => {
         render(<DiaryPage />);
       });
 
       await waitFor(() => {
-        // 年月のヘッダーが表示される
+        // 訪問日時の年月のヘッダーが表示される
         expect(screen.getByText("2024年2月")).toBeInTheDocument();
         expect(screen.getByText("2024年1月")).toBeInTheDocument();
       });
@@ -225,34 +229,34 @@ describe("DiaryPage (旅の日記画面)", () => {
       expect(january).toHaveTextContent("京都観光");
     });
 
-    it("作成日時が正しく表示される", async () => {
+    it("訪問日時が正しく表示される", async () => {
       await act(async () => {
         render(<DiaryPage />);
       });
 
       await waitFor(() => {
-        // 作成日時のラベルと値が表示される
-        const createdDateElements = screen.getAllByText(/作成日時:/);
-        expect(createdDateElements.length).toBe(3);
+        // 訪問日時のラベルと値が表示される
+        const visitedDateElements = screen.getAllByText(/訪問日時:/);
+        expect(visitedDateElements.length).toBe(3);
         
-        // 日時のフォーマットが正しい（例：2024/01/15 19:00）
-        expect(screen.getByText(/2024\/01\/15/)).toBeInTheDocument();
+        // 日時のフォーマットが正しい（例：2024/01/10）
+        expect(screen.getByText(/2024\/01\/10/)).toBeInTheDocument();
       });
     });
 
-    it("更新日時が作成日時と異なる場合のみ表示される", async () => {
+    it("訪問日時のみが表示され、作成日時と更新日時は表示されない", async () => {
       await act(async () => {
         render(<DiaryPage />);
       });
 
       await waitFor(() => {
-        // 京都観光の日記（更新されている）には最終更新が表示される
-        const kyotoCard = screen.getByText("京都観光").closest("div[class*='bg-gradient']");
-        expect(kyotoCard).toHaveTextContent("最終更新:");
+        // 各日記カードに訪問日時が表示される
+        const visitedDateElements = screen.getAllByText(/訪問日時:/);
+        expect(visitedDateElements.length).toBe(3);
         
-        // 東京旅行の日記（更新されていない）には最終更新が表示されない
-        const tokyoCard = screen.getByText("東京旅行").closest("div[class*='bg-gradient']");
-        expect(tokyoCard).not.toHaveTextContent("最終更新:");
+        // 作成日時と最終更新は表示されない
+        expect(screen.queryByText(/作成日時:/)).not.toBeInTheDocument();
+        expect(screen.queryByText(/最終更新:/)).not.toBeInTheDocument();
       });
     });
 
@@ -276,6 +280,7 @@ describe("DiaryPage (旅の日記画面)", () => {
         content: "あ".repeat(150), // 150文字の内容
         latitude: 35.0,
         longitude: 135.0,
+        visited_at: "2024-03-01T10:00:00Z",
         created_at: "2024-03-01T10:00:00Z",
         updated_at: "2024-03-01T10:00:00Z",
       };

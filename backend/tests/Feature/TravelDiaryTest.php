@@ -25,6 +25,7 @@ class TravelDiaryTest extends TestCase
             'longitude' => 139.6503,
             'title' => '東京旅行',
             'content' => '東京タワーを見ました。とても綺麗でした。',
+            'visited_at' => '2024-12-01 10:30:00',
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -32,7 +33,38 @@ class TravelDiaryTest extends TestCase
 
         $response->assertStatus(201)
             ->assertJsonStructure([
-                'id', 'user_id', 'latitude', 'longitude', 'title', 'content', 'created_at', 'updated_at'
+                'id', 'user_id', 'latitude', 'longitude', 'title', 'content', 'visited_at', 'created_at', 'updated_at'
+            ]);
+
+        $this->assertDatabaseHas('travel_diaries', [
+            'user_id' => $user->id,
+            'title' => '東京旅行',
+            'content' => '東京タワーを見ました。とても綺麗でした。',
+        ]);
+    }
+
+    public function test_user_can_create_travel_diary_with_visited_at()
+    {
+        $user = User::factory()->create([
+            'email_verified_at' => now(),
+        ]);
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        $visitedAt = '2024-12-01 10:30:00';
+        $payload = [
+            'latitude' => 35.6762,
+            'longitude' => 139.6503,
+            'title' => '東京旅行',
+            'content' => '東京タワーを見ました。とても綺麗でした。',
+            'visited_at' => $visitedAt,
+        ];
+
+        $response = $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/v1/travel-diaries', $payload);
+
+        $response->assertStatus(201)
+            ->assertJsonStructure([
+                'id', 'user_id', 'latitude', 'longitude', 'title', 'content', 'visited_at', 'created_at', 'updated_at'
             ]);
 
         $this->assertDatabaseHas('travel_diaries', [
@@ -85,9 +117,11 @@ class TravelDiaryTest extends TestCase
             'content' => '元の内容',
         ]);
 
+        $visitedAt = '2024-12-05 14:00:00';
         $payload = [
             'title' => '更新されたタイトル',
             'content' => '更新された内容',
+            'visited_at' => $visitedAt,
         ];
 
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -207,6 +241,7 @@ class TravelDiaryTest extends TestCase
             'longitude' => 139.6503,
             'title' => '東京旅行',
             'content' => '東京タワーを見ました。',
+            'visited_at' => '2024-12-01 10:30:00',
         ];
 
         // GeocodingServiceをモック化してJPを返すようにする
@@ -259,6 +294,7 @@ class TravelDiaryTest extends TestCase
                 'longitude' => 139.6503,
                 'title' => '東京旅行1日目',
                 'content' => '東京駅に到着',
+                'visited_at' => '2024-12-01 10:00:00',
             ]);
 
         // 2つ目の日記作成（同じ国）
@@ -268,6 +304,7 @@ class TravelDiaryTest extends TestCase
                 'longitude' => 135.4959,
                 'title' => '大阪旅行',
                 'content' => '大阪城を見学',
+                'visited_at' => '2024-12-02 14:00:00',
             ]);
 
         // diary_countが2になっているかチェック

@@ -19,11 +19,13 @@ class TravelDiary extends Model
         'longitude',
         'title',
         'content',
+        'visited_at',
     ];
 
     protected $casts = [
         'latitude' => 'float',
         'longitude' => 'float',
+        'visited_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
