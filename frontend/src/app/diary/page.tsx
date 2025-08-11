@@ -21,7 +21,7 @@ import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
-import { FaBook, FaMapMarkerAlt, FaEye, FaCalendar, FaClock } from "react-icons/fa";
+import { FaBook, FaMapMarkerAlt, FaEye, FaClock } from "react-icons/fa";
 import {
   getTravelDiaries,
   createTravelDiary,
@@ -84,6 +84,7 @@ export default function DiaryPage() {
     content: string;
     latitude: number;
     longitude: number;
+    visited_at: string;
   }) => {
     setIsLoading(true);
     setError(null);
@@ -156,10 +157,10 @@ export default function DiaryPage() {
               </h3>
               <div className="space-y-6">
                 {(() => {
-                  // 日記を年月でグループ化
+                  // 日記を訪問日時の年月でグループ化
                   const groupedDiaries: { [key: string]: TravelDiary[] } = {};
                   diaries.forEach((diary) => {
-                    const date = new Date(diary.created_at);
+                    const date = new Date(diary.visited_at);
                     const yearMonth = `${date.getFullYear()}年${date.getMonth() + 1}月`;
                     if (!groupedDiaries[yearMonth]) {
                       groupedDiaries[yearMonth] = [];
@@ -198,46 +199,25 @@ export default function DiaryPage() {
                                       ? `${diary.content.substring(0, 100)}...`
                                       : diary.content}
                                   </p>
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                                      <span className="flex items-center gap-1">
-                                        <FaMapMarkerAlt />
-                                        {Number(diary.latitude).toFixed(4)},{" "}
-                                        {Number(diary.longitude).toFixed(4)}
-                                      </span>
-                                    </div>
-                                    <div className="flex items-center gap-4 text-xs text-gray-500">
-                                      <span className="flex items-center gap-1">
-                                        <FaCalendar />
-                                        作成日時: {new Date(diary.created_at).toLocaleString(
-                                          "ja-JP",
-                                          {
-                                            year: "numeric",
-                                            month: "2-digit",
-                                            day: "2-digit",
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                          }
-                                        )}
-                                      </span>
-                                    </div>
-                                    {diary.updated_at !== diary.created_at && (
-                                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                                        <span className="flex items-center gap-1">
-                                          <FaClock />
-                                          最終更新: {new Date(diary.updated_at).toLocaleString(
-                                            "ja-JP",
-                                            {
-                                              year: "numeric",
-                                              month: "2-digit",
-                                              day: "2-digit",
-                                              hour: "2-digit",
-                                              minute: "2-digit",
-                                            }
-                                          )}
-                                        </span>
-                                      </div>
-                                    )}
+                                  <div className="flex items-center gap-4 text-xs text-gray-500">
+                                    <span className="flex items-center gap-1">
+                                      <FaMapMarkerAlt />
+                                      {Number(diary.latitude).toFixed(4)},{" "}
+                                      {Number(diary.longitude).toFixed(4)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <FaClock className="text-blue-500" />
+                                      訪問日時: {new Date(diary.visited_at).toLocaleString(
+                                        "ja-JP",
+                                        {
+                                          year: "numeric",
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        }
+                                      )}
+                                    </span>
                                   </div>
                                 </div>
                                 <div className="flex items-center ml-4">

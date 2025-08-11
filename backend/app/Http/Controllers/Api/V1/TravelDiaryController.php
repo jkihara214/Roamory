@@ -20,7 +20,7 @@ class TravelDiaryController extends Controller
     public function index(Request $request): JsonResponse
     {
         $diaries = TravelDiary::where('user_id', $request->user()->id)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('visited_at', 'desc')
             ->get();
 
         return response()->json($diaries);
@@ -37,6 +37,7 @@ class TravelDiaryController extends Controller
             'longitude' => $request->longitude,
             'title' => $request->title,
             'content' => $request->content,
+            'visited_at' => $request->visited_at,
         ]);
 
         // 緯度経度から国を判定して訪問国に追加
@@ -77,7 +78,7 @@ class TravelDiaryController extends Controller
             );
         }
 
-        $diary->update($request->only(['latitude', 'longitude', 'title', 'content']));
+        $diary->update($request->only(['latitude', 'longitude', 'title', 'content', 'visited_at']));
 
         return response()->json($diary);
     }

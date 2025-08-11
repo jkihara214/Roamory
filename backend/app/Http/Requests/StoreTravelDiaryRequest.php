@@ -28,6 +28,7 @@ class StoreTravelDiaryRequest extends FormRequest
             'longitude' => 'required|numeric|between:-180,180',
             'title' => 'required|string|max:255',
             'content' => 'required|string|max:10000',
+            'visited_at' => 'required|date',
         ];
     }
 
@@ -51,6 +52,8 @@ class StoreTravelDiaryRequest extends FormRequest
             'content.required' => '内容は必須です。',
             'content.string' => '内容は文字列で入力してください。',
             'content.max' => '内容は10000文字以内で入力してください。',
+            'visited_at.required' => '訪問日時は必須です。',
+            'visited_at.date' => '訪問日時は有効な日時形式で入力してください。',
         ];
     }
 } 

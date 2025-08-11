@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import DiaryForm from "@/components/DiaryForm";
 import DeleteConfirmModal from "@/components/DeleteConfirmModal";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
-import { FaBook, FaMapMarkerAlt, FaEdit, FaTrash, FaArrowLeft, FaCalendar } from "react-icons/fa";
+import { FaBook, FaMapMarkerAlt, FaEdit, FaTrash, FaArrowLeft, FaCalendar, FaClock } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 import { getTravelDiary, getTravelDiaries, updateTravelDiary, deleteTravelDiary } from "@/lib/api";
 import { TravelDiary } from "@/types/diary";
@@ -95,6 +95,7 @@ export default function DiaryDetailPage() {
     content: string;
     latitude: number;
     longitude: number;
+    visited_at: string;
   }) => {
     if (!diary) return;
 
@@ -228,10 +229,6 @@ export default function DiaryDetailPage() {
           {isEditing ? (
             // 編集フォーム
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaEdit className="text-blue-500" />
-                日記を編集
-              </h2>
               <DiaryForm
                 onSubmit={handleUpdate}
                 onCancel={() => setIsEditing(false)}
@@ -241,30 +238,77 @@ export default function DiaryDetailPage() {
             </div>
           ) : (
             <>
+              {/* 詳細画面タイトル */}
+              <h1 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <FaBook className="text-green-500" />
+                日記詳細
+              </h1>
+              
               {/* 日記詳細表示 */}
               <div className="mb-6">
-                <h1 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-2">
-                  <FaBook className="text-green-500" />
-                  {diary.title}
-                </h1>
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                {/* 緯度経度、作成日時、最終更新 */}
+                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
                   <span className="flex items-center gap-1">
                     <FaMapMarkerAlt />
                     {Number(diary.latitude).toFixed(4)}, {Number(diary.longitude).toFixed(4)}
                   </span>
                   <span className="flex items-center gap-1">
                     <FaCalendar />
-                    {new Date(diary.created_at).toLocaleDateString("ja-JP")}
+                    作成日: {new Date(diary.created_at).toLocaleDateString("ja-JP")}
                   </span>
+                  {diary.updated_at !== diary.created_at && (
+                    <span className="flex items-center gap-1">
+                      <FaClock className="text-gray-500" />
+                      最終更新: {new Date(diary.updated_at).toLocaleDateString("ja-JP")}
+                    </span>
+                  )}
                 </div>
-                <div className="bg-gray-50 rounded-lg p-6 border border-gray-200">
-                  <p className="text-gray-700 whitespace-pre-wrap">{diary.content}</p>
+                
+                {/* 訪問日時 */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">訪問日時</label>
+                  <div className="bg-white border border-gray-300 rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <FaClock className="text-blue-500" />
+                      <span className="text-gray-800">
+                        {new Date(diary.visited_at).toLocaleString("ja-JP", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          weekday: "short",
+                          hour: "2-digit",
+                          minute: "2-digit"
+                        })}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* タイトル */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">タイトル</label>
+                  <div className="bg-white border border-gray-300 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-800">
+                      {diary.title}
+                    </h3>
+                  </div>
+                </div>
+                
+                {/* 内容 */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">内容</label>
+                  <div className="bg-white border border-gray-300 rounded-lg p-4">
+                    <p className="text-gray-700 whitespace-pre-wrap">{diary.content}</p>
+                  </div>
                 </div>
               </div>
 
-              {/* 地図表示 */}
+              {/* 場所（地図表示） */}
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-800 mb-4">場所</h3>
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  <FaMapMarkerAlt className="text-green-500" />
+                  場所
+                </h3>
                 <DiaryMap
                   onMapClick={() => {}}
                   diaries={allDiaries}

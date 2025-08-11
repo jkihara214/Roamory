@@ -30,6 +30,7 @@ const mockDiary: TravelDiary = {
   content: "東京タワーに行きました。景色が素晴らしかったです。天気も良く、富士山も見えました。",
   latitude: 35.6585,
   longitude: 139.7454,
+  visited_at: "2024-01-10T14:30:00Z",
   created_at: "2024-01-15T10:00:00Z",
   updated_at: "2024-01-20T14:30:00Z",
 };
@@ -43,6 +44,7 @@ const mockAllDiaries: TravelDiary[] = [
     content: "清水寺と金閣寺を巡りました。",
     latitude: 35.0116,
     longitude: 135.7681,
+    visited_at: "2024-01-18T10:00:00Z",
     created_at: "2024-01-20T14:30:00Z",
     updated_at: "2024-01-22T16:45:00Z",
   },
@@ -53,6 +55,7 @@ const mockAllDiaries: TravelDiary[] = [
     content: "道頓堀でたこ焼きとお好み焼きを満喫しました。",
     latitude: 34.6937,
     longitude: 135.5023,
+    visited_at: "2024-02-08T18:00:00Z",
     created_at: "2024-02-10T12:00:00Z",
     updated_at: "2024-02-10T12:00:00Z",
   },
@@ -137,6 +140,7 @@ jest.mock("@/components/DiaryForm", () => {
               content: editingDiary?.content || "新しい内容",
               latitude: editingDiary?.latitude || 35.0,
               longitude: editingDiary?.longitude || 135.0,
+              visited_at: editingDiary?.visited_at || "2024-01-10T14:30:00Z",
             });
           }}
         >
@@ -237,7 +241,7 @@ describe("DiaryDetailPage (日記詳細画面)", () => {
       });
     });
 
-    it("作成日時が表示される", async () => {
+    it("訪問日時、作成日、最終更新日が表示される", async () => {
       await act(async () => {
         render(<DiaryDetailPage />);
       });
@@ -247,7 +251,16 @@ describe("DiaryDetailPage (日記詳細画面)", () => {
         expect(screen.getByTestId("mock-header")).toBeInTheDocument();
       });
 
-      // 作成日時が表示される（日付の形式は環境によって異なる可能性があるため、年の部分のみチェック）
+      // 訪問日時が表示される
+      expect(screen.getByText("訪問日時")).toBeInTheDocument();
+      
+      // 作成日が表示される
+      expect(screen.getByText(/作成日:/)).toBeInTheDocument();
+      
+      // 最終更新が表示される（updated_atがcreated_atと異なる場合）
+      expect(screen.getByText(/最終更新:/)).toBeInTheDocument();
+      
+      // 日付が表示される（年の部分のみチェック）
       const dateElements = screen.queryAllByText(/2024/);
       expect(dateElements.length).toBeGreaterThan(0);
     });
@@ -344,6 +357,7 @@ describe("DiaryDetailPage (日記詳細画面)", () => {
             content: expect.any(String),
             latitude: expect.any(Number),
             longitude: expect.any(Number),
+            visited_at: expect.any(String),
           })
         );
       });
