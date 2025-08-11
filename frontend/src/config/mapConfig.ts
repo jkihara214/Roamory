@@ -46,7 +46,7 @@ export const getDefaultTileProvider = (): TileProvider => {
 // 地図の初期設定
 export const mapConfig = {
   center: [35.6762, 139.6503] as [number, number], // 東京
-  zoom: 4,
+  zoom: 5,
   minZoom: 1,
   maxZoom: 18,
   zoomControl: true,

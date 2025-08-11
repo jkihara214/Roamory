@@ -6,6 +6,7 @@ import "leaflet/dist/leaflet.css";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import { getDefaultTileProvider, mapConfig } from "@/config/mapConfig";
 import { getVisitedCountryCodes } from "@/lib/api";
+import { isAxiosError } from "axios";
 
 interface DiaryMapProps {
   onMapClick: (event: MapClickEvent) => void;
@@ -13,6 +14,7 @@ interface DiaryMapProps {
   onDiaryClick?: (diary: TravelDiary) => void;
   clickedLocation?: MapClickEvent | null;
   showVisitedCountries?: boolean;
+  centerOnDiary?: TravelDiary | null;
 }
 
 export default function DiaryMap({
@@ -21,6 +23,7 @@ export default function DiaryMap({
   onDiaryClick,
   clickedLocation,
   showVisitedCountries = false,
+  centerOnDiary = null,
 }: DiaryMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -33,6 +36,7 @@ export default function DiaryMap({
   const [showInfo, setShowInfo] = useState(false);
   const [visitedCountryCodes, setVisitedCountryCodes] = useState<string[]>([]);
   const [countryGeoJson, setCountryGeoJson] = useState<any>(null);
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
 
   // refの値を更新
   useEffect(() => {
@@ -42,7 +46,8 @@ export default function DiaryMap({
 
   // 日記のピンを更新
   useEffect(() => {
-    if (!leafletMapRef.current) return;
+    // 地図が初期化されていない場合はスキップ
+    if (!leafletMapRef.current || !isMapInitialized) return;
 
     // 既存のマーカーを削除
     markersRef.current.forEach((marker) => marker.remove());
@@ -50,14 +55,21 @@ export default function DiaryMap({
 
     // 新しいマーカーを追加
     diaries.forEach((diary) => {
+      // centerOnDiaryと同じ日記の場合は赤いピン、それ以外は青いピン
+      const isHighlighted = centerOnDiary && centerOnDiary.id === diary.id;
+      const pinColor = isHighlighted ? "#EF4444" : "#3B82F6"; // 赤 or 青
+      const pinSize = isHighlighted ? 24 : 20; // 強調表示の場合は少し大きく
+
       const marker = L.marker([diary.latitude, diary.longitude], {
         icon: L.divIcon({
-          html: `<svg viewBox="0 0 384 512" width="20" height="20" fill="#3B82F6" style="display: block;">
+          html: `<svg viewBox="0 0 384 512" width="${pinSize}" height="${pinSize}" fill="${pinColor}" style="display: block;">
                    <path d="M172.268 501.67C26.97 291.031 0 269.413 0 192 0 85.961 85.961 0 192 0s192 85.961 192 192c0 77.413-26.97 99.031-172.268 309.67-9.535 13.774-29.93 13.773-39.464 0zM192 272c44.183 0 80-35.817 80-80s-35.817-80-80-80-80 35.817-80 80 35.817 80 80 80z"/>
                  </svg>`,
-          iconSize: [20, 20],
-          className: "diary-marker",
-          iconAnchor: [10, 20],
+          iconSize: [pinSize, pinSize],
+          className: isHighlighted
+            ? "highlighted-diary-marker"
+            : "diary-marker",
+          iconAnchor: [pinSize / 2, pinSize],
           popupAnchor: [0, -25], // ポップアップをピンから25px上に表示
         }),
       })
@@ -84,11 +96,11 @@ export default function DiaryMap({
 
       markersRef.current.push(marker);
     });
-  }, [diaries]);
+  }, [diaries, centerOnDiary, isMapInitialized]);
 
   // クリック位置のピンを更新
   useEffect(() => {
-    if (!leafletMapRef.current) return;
+    if (!leafletMapRef.current || !isMapInitialized) return;
 
     // 既存のクリックマーカーを削除
     if (clickedMarkerRef.current) {
@@ -128,7 +140,7 @@ export default function DiaryMap({
 
       clickedMarkerRef.current = clickedMarker;
     }
-  }, [clickedLocation]);
+  }, [clickedLocation, isMapInitialized]);
 
   // 国境線データを読み込み
   useEffect(() => {
@@ -157,22 +169,34 @@ export default function DiaryMap({
   // 訪問済み国データを取得
   useEffect(() => {
     if (showVisitedCountries) {
-      const fetchVisitedCountries = async () => {
-        try {
-          const response = await getVisitedCountryCodes();
-          setVisitedCountryCodes(response.data.country_codes);
-        } catch (error) {
-          console.error("Failed to fetch visited countries:", error);
-          setVisitedCountryCodes([]);
-        }
-      };
-      fetchVisitedCountries();
+      // デバウンス用のタイマー
+      const timeoutId = setTimeout(() => {
+        const fetchVisitedCountries = async () => {
+          try {
+            const response = await getVisitedCountryCodes();
+            setVisitedCountryCodes(response.data.country_codes);
+          } catch (error) {
+            // 429エラーの場合は詳細なログを出力
+            if (isAxiosError(error) && error.response?.status === 429) {
+              console.warn(
+                "Rate limit exceeded for visited countries API. Using cached data."
+              );
+            } else {
+              console.error("Failed to fetch visited countries:", error);
+            }
+            setVisitedCountryCodes([]);
+          }
+        };
+        fetchVisitedCountries();
+      }, 500); // 500ms待機してから実行
+
+      return () => clearTimeout(timeoutId);
     }
-  }, [showVisitedCountries, diaries]); // diariesの変更も監視
+  }, [showVisitedCountries]); // diariesの監視を削除（頻繁な更新を防ぐ）
 
   // 訪問済み国をハイライト表示
   useEffect(() => {
-    if (!leafletMapRef.current || !showVisitedCountries) return;
+    if (!leafletMapRef.current || !showVisitedCountries || !isMapInitialized) return;
 
     // 既存のハイライトレイヤーを削除
     highlightLayersRef.current.forEach((layer) => layer.remove());
@@ -180,8 +204,6 @@ export default function DiaryMap({
 
     // 訪問済み国をハイライト
     visitedCountryCodes.forEach((countryCode) => {
-      let countryFound = false;
-
       // Natural Earth FeatureCollectionからの検索
       if (countryGeoJson?.features) {
         const countryFeature = countryGeoJson.features.find((feature: any) => {
@@ -196,7 +218,6 @@ export default function DiaryMap({
         });
 
         if (countryFeature) {
-          countryFound = true;
           // 実際の国境線を表示
           const geoJsonLayer = L.geoJSON(countryFeature, {
             style: {
@@ -226,7 +247,7 @@ export default function DiaryMap({
         }
       }
     });
-  }, [visitedCountryCodes, countryGeoJson, showVisitedCountries]);
+  }, [visitedCountryCodes, countryGeoJson, showVisitedCountries, isMapInitialized]);
 
   useEffect(() => {
     const initializeMap = () => {
@@ -235,10 +256,14 @@ export default function DiaryMap({
       // 既に初期化されている場合はスキップ
       if (leafletMapRef.current) return;
 
+      // 中心位置を決定（centerOnDiaryが指定されていればその位置、なければデフォルト）
+      const initialCenter = mapConfig.center;
+      const initialZoom = mapConfig.zoom;
+
       // 地図初期化
       const map = L.map(mapRef.current, {
-        center: mapConfig.center,
-        zoom: mapConfig.zoom,
+        center: initialCenter,
+        zoom: initialZoom,
         minZoom: mapConfig.minZoom,
         maxZoom: mapConfig.maxZoom,
         zoomControl: mapConfig.zoomControl,
@@ -277,6 +302,9 @@ export default function DiaryMap({
         console.warn("Tile loading error:", e);
         // 必要に応じて代替タイルプロバイダーに切り替える処理をここに追加
       });
+
+      // 地図の初期化が完了したことを示す
+      setIsMapInitialized(true);
     };
 
     initializeMap();
@@ -290,9 +318,25 @@ export default function DiaryMap({
       if (leafletMapRef.current) {
         leafletMapRef.current.remove();
         leafletMapRef.current = null;
+        setIsMapInitialized(false);
       }
     };
-  }, []); // 依存配列を空にして初期化時のみ実行
+  }, []); // 初期化は一度だけ実行
+
+  // centerOnDiaryが指定されている場合、その位置に地図を移動
+  useEffect(() => {
+    if (!leafletMapRef.current || !centerOnDiary || !isMapInitialized) return;
+
+    // 地図の中心を移動（アニメーション付き）
+    leafletMapRef.current.setView(
+      [Number(centerOnDiary.latitude), Number(centerOnDiary.longitude)],
+      7, // ズームレベル
+      {
+        animate: true,
+        duration: 0.5,
+      }
+    );
+  }, [centerOnDiary, isMapInitialized]);
 
   return (
     <div className="relative" data-testid="map-container">
