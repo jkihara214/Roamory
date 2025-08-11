@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
 import DiaryForm from "@/components/DiaryForm";
+import Link from "next/link";
 
 // DiaryMapを動的インポートしてサーバーサイドレンダリングを無効化
 const DiaryMap = dynamic(() => import("@/components/DiaryMap"), {
@@ -20,13 +21,10 @@ import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
 import { MapClickEvent, TravelDiary } from "@/types/diary";
 import AuthLoadingModal from "@/components/AuthLoadingModal";
-import DeleteConfirmModal from "@/components/DeleteConfirmModal";
-import { FaBook, FaMapMarkerAlt, FaTrash, FaEdit } from "react-icons/fa";
+import { FaBook, FaMapMarkerAlt, FaEye, FaCalendar, FaClock } from "react-icons/fa";
 import {
   getTravelDiaries,
   createTravelDiary,
-  updateTravelDiary,
-  deleteTravelDiary,
 } from "@/lib/api";
 import { isAxiosError } from "axios";
 
@@ -41,12 +39,8 @@ export default function DiaryPage() {
   );
   const [diaries, setDiaries] = useState<TravelDiary[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingDiary, setEditingDiary] = useState<TravelDiary | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingDiary, setDeletingDiary] = useState<TravelDiary | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchMe();
@@ -78,14 +72,11 @@ export default function DiaryPage() {
 
   const handleMapClick = (event: MapClickEvent) => {
     setClickedLocation(event);
-    setEditingDiary(null);
     setShowForm(true);
   };
 
   const handleDiaryClick = (diary: TravelDiary) => {
-    setEditingDiary(diary);
-    setClickedLocation(null); // クリック位置のピンを削除
-    setShowForm(true);
+    router.push(`/diary/detail?id=${diary.id}`);
   };
 
   const handleCreateDiary = async (data: {
@@ -112,107 +103,9 @@ export default function DiaryPage() {
     }
   };
 
-  const handleUpdateDiary = async (data: {
-    title: string;
-    content: string;
-    latitude: number;
-    longitude: number;
-  }) => {
-    if (!editingDiary) return;
-
-    // 更新対象の日記がまだ存在するかチェック
-    const existingDiary = diaries.find((d) => d.id === editingDiary.id);
-    if (!existingDiary) {
-      setError(
-        "編集対象の日記が見つかりません。既に削除されている可能性があります。"
-      );
-      setShowForm(false);
-      setEditingDiary(null);
-      setClickedLocation(null);
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await updateTravelDiary(editingDiary.id, data);
-      setDiaries(
-        diaries.map((d) => (d.id === editingDiary.id ? response.data : d))
-      );
-      setShowForm(false);
-      setEditingDiary(null);
-    } catch (err) {
-      let message = "日記の更新に失敗しました";
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = err.response.data.message;
-      }
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (diary: TravelDiary) => {
-    setDeletingDiary(diary);
-    setShowDeleteModal(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deletingDiary) return;
-
-    setIsDeleting(true);
-    try {
-      await deleteTravelDiary(deletingDiary.id);
-      setDiaries(diaries.filter((d) => d.id !== deletingDiary.id));
-
-      // 削除対象の日記が現在編集中の日記と同じ場合は、編集フォームを閉じる
-      if (editingDiary && editingDiary.id === deletingDiary.id) {
-        setShowForm(false);
-        setEditingDiary(null);
-        setClickedLocation(null);
-      }
-
-      setShowDeleteModal(false);
-      setDeletingDiary(null);
-    } catch (err) {
-      let message = "日記の削除に失敗しました";
-      if (isAxiosError(err) && err.response?.data?.message) {
-        message = err.response.data.message;
-      }
-      setError(message);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleDeleteCancel = () => {
-    setShowDeleteModal(false);
-    setDeletingDiary(null);
-  };
-
-  const handleModalSubmit = (data: {
-    title: string;
-    content: string;
-    latitude: number;
-    longitude: number;
-  }) => {
-    if (editingDiary) {
-      handleUpdateDiary(data);
-    } else {
-      handleCreateDiary(data);
-    }
-  };
-
   return (
     <>
       {isAuthLoading && <AuthLoadingModal />}
-      <DeleteConfirmModal
-        isOpen={showDeleteModal}
-        onClose={handleDeleteCancel}
-        onConfirm={handleDeleteConfirm}
-        title={deletingDiary?.title || ""}
-        isLoading={isDeleting}
-      />
       <Header />
       <div className="flex flex-col items-center py-2 px-2 sm:px-4 min-h-[calc(100vh-64px)]">
         <div className="w-full max-w-md sm:max-w-xl lg:max-w-4xl mx-auto mt-4 sm:mt-6 p-4 sm:p-8 bg-white rounded-2xl shadow-xl border border-sky-100">
@@ -261,61 +154,105 @@ export default function DiaryPage() {
                 <FaBook className="text-green-500" />
                 あなたの日記 ({diaries.length}件)
               </h3>
-              <div className="space-y-3">
-                {diaries.map((diary) => (
-                  <div
-                    key={diary.id}
-                    className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition-shadow cursor-pointer"
-                    onClick={() => handleDiaryClick(diary)}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-gray-800 mb-1">
-                          {diary.title}
-                        </h4>
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                          {diary.content.length > 100
-                            ? `${diary.content.substring(0, 100)}...`
-                            : diary.content}
-                        </p>
-                        <div className="flex items-center gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <FaMapMarkerAlt />
-                            {Number(diary.latitude).toFixed(4)},{" "}
-                            {Number(diary.longitude).toFixed(4)}
-                          </span>
-                          <span>
-                            {new Date(diary.created_at).toLocaleDateString(
-                              "ja-JP"
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-2 ml-4">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDiaryClick(diary);
-                          }}
-                          className="p-2 text-blue-500 hover:bg-blue-100 rounded-lg transition-colors"
-                          title="編集"
-                        >
-                          <FaEdit size={14} />
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteClick(diary);
-                          }}
-                          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
-                          title="削除"
-                        >
-                          <FaTrash size={14} />
-                        </button>
+              <div className="space-y-6">
+                {(() => {
+                  // 日記を年月でグループ化
+                  const groupedDiaries: { [key: string]: TravelDiary[] } = {};
+                  diaries.forEach((diary) => {
+                    const date = new Date(diary.created_at);
+                    const yearMonth = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+                    if (!groupedDiaries[yearMonth]) {
+                      groupedDiaries[yearMonth] = [];
+                    }
+                    groupedDiaries[yearMonth].push(diary);
+                  });
+
+                  // 年月を新しい順にソート
+                  const sortedYearMonths = Object.keys(groupedDiaries).sort((a, b) => {
+                    const [aYear, aMonth] = a.match(/\d+/g)!.map(Number);
+                    const [bYear, bMonth] = b.match(/\d+/g)!.map(Number);
+                    if (bYear !== aYear) return bYear - aYear;
+                    return bMonth - aMonth;
+                  });
+
+                  return sortedYearMonths.map((yearMonth) => (
+                    <div key={yearMonth}>
+                      <h4 className="text-md font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
+                        {yearMonth}
+                      </h4>
+                      <div className="space-y-3">
+                        {groupedDiaries[yearMonth].map((diary) => (
+                          <Link
+                            key={diary.id}
+                            href={`/diary/detail?id=${diary.id}`}
+                            className="block"
+                          >
+                            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition-shadow cursor-pointer">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                  <h4 className="font-semibold text-gray-800 mb-1">
+                                    {diary.title}
+                                  </h4>
+                                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                    {diary.content.length > 100
+                                      ? `${diary.content.substring(0, 100)}...`
+                                      : diary.content}
+                                  </p>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                      <span className="flex items-center gap-1">
+                                        <FaMapMarkerAlt />
+                                        {Number(diary.latitude).toFixed(4)},{" "}
+                                        {Number(diary.longitude).toFixed(4)}
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-xs text-gray-500">
+                                      <span className="flex items-center gap-1">
+                                        <FaCalendar />
+                                        作成日時: {new Date(diary.created_at).toLocaleString(
+                                          "ja-JP",
+                                          {
+                                            year: "numeric",
+                                            month: "2-digit",
+                                            day: "2-digit",
+                                            hour: "2-digit",
+                                            minute: "2-digit",
+                                          }
+                                        )}
+                                      </span>
+                                    </div>
+                                    {diary.updated_at !== diary.created_at && (
+                                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                          <FaClock />
+                                          最終更新: {new Date(diary.updated_at).toLocaleString(
+                                            "ja-JP",
+                                            {
+                                              year: "numeric",
+                                              month: "2-digit",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            }
+                                          )}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center ml-4">
+                                  <span className="p-2 text-gray-600 hover:text-green-600 transition-colors">
+                                    <FaEye size={16} title="詳細を見る" />
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
@@ -324,14 +261,13 @@ export default function DiaryPage() {
           {showForm && (
             <div className="mb-6">
               <DiaryForm
-                onSubmit={handleModalSubmit}
+                onSubmit={handleCreateDiary}
                 onCancel={() => {
                   setShowForm(false);
                   setClickedLocation(null); // クリック位置のピンを削除
-                  setEditingDiary(null);
                 }}
                 clickedLocation={clickedLocation}
-                editingDiary={editingDiary}
+                editingDiary={null}
                 isLoading={isLoading}
               />
             </div>
