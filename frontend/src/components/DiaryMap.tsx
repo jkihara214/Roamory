@@ -76,23 +76,32 @@ export default function DiaryMap({
         .addTo(leafletMapRef.current!)
         .bindPopup(
           `
-        <div class="diary-popup">
-          <h3 class="font-bold text-sm mb-1">${diary.title}</h3>
-          <p class="text-xs text-gray-600 mb-2">${diary.content?.substring(
-            0,
-            100
-          )}${diary.content?.length > 100 ? "..." : ""}</p>
-          <p class="text-xs text-gray-500">${new Date(
-            diary.created_at
-          ).toLocaleDateString("ja-JP")}</p>
+        <div class="diary-popup" style="min-width: 200px;">
+          <a href="/diary/detail?id=${diary.id}" 
+             class="font-bold text-sm mb-2 text-blue-600 hover:text-blue-800 hover:underline block"
+             style="color: #2563eb; text-decoration: none;"
+             onmouseover="this.style.textDecoration='underline'"
+             onmouseout="this.style.textDecoration='none'">
+            ${diary.title}
+          </a>
+          <p class="text-xs text-gray-600 mt-2">
+            <svg class="inline-block w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+            </svg>
+            訪問日時: ${new Date(diary.visited_at).toLocaleString(
+              "ja-JP",
+              {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+              }
+            )}
+          </p>
         </div>
       `
-        )
-        .on("click", () => {
-          if (onDiaryClickRef.current) {
-            onDiaryClickRef.current(diary);
-          }
-        });
+        );
 
       markersRef.current.push(marker);
     });
@@ -192,7 +201,7 @@ export default function DiaryMap({
 
       return () => clearTimeout(timeoutId);
     }
-  }, [showVisitedCountries]); // diariesの監視を削除（頻繁な更新を防ぐ）
+  }, [showVisitedCountries, diaries]);
 
   // 訪問済み国をハイライト表示
   useEffect(() => {
@@ -268,8 +277,9 @@ export default function DiaryMap({
         maxZoom: mapConfig.maxZoom,
         zoomControl: mapConfig.zoomControl,
         attributionControl: mapConfig.attributionControl,
+        worldCopyJump: true, // 世界地図をループさせる際に自動的にジャンプ
         maxBounds: mapConfig.maxBounds,
-        maxBoundsViscosity: 1.0, // 境界での「弾力性」を設定（1.0で完全に固定）
+        maxBoundsViscosity: 0.2, // 境界での「弾力性」を設定
       });
 
       // 設定ファイルからタイルプロバイダーを取得
@@ -293,7 +303,12 @@ export default function DiaryMap({
       // 地図クリックイベント（refを使用）
       map.on("click", (e: L.LeafletMouseEvent) => {
         if (typeof onMapClickRef.current === "function") {
-          onMapClickRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
+          // 経度を-180〜180の範囲に正規化
+          let lng = e.latlng.lng;
+          while (lng > 180) lng -= 360;
+          while (lng < -180) lng += 360;
+          
+          onMapClickRef.current({ lat: e.latlng.lat, lng: lng });
         }
       });
 

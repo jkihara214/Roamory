@@ -41,6 +41,7 @@ export default function DiaryPage() {
   const [showForm, setShowForm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"list" | "create">("list");
 
   useEffect(() => {
     fetchMe();
@@ -90,9 +91,15 @@ export default function DiaryPage() {
     setError(null);
     try {
       const response = await createTravelDiary(data);
-      setDiaries([response.data, ...diaries]);
+      // 新しい日記を追加して訪問日時順（新しい順）でソート
+      const updatedDiaries = [...diaries, response.data].sort((a, b) => {
+        return new Date(b.visited_at).getTime() - new Date(a.visited_at).getTime();
+      });
+      setDiaries(updatedDiaries);
       setShowForm(false);
       setClickedLocation(null);
+      // 登録成功後は一覧タブに切り替え
+      setActiveTab("list");
     } catch (err) {
       let message = "日記の作成に失敗しました";
       if (isAxiosError(err) && err.response?.data?.message) {
@@ -118,10 +125,30 @@ export default function DiaryPage() {
             </h1>
           </div>
 
-          <div className="mb-6">
-            <p className="text-gray-600 text-center">
-              地図をクリックすると、ピンが表示され下に日記作成フォームが表示されます
-            </p>
+          {/* タブメニュー */}
+          <div className="flex mb-6 border-b border-gray-200">
+            <button
+              onClick={() => setActiveTab("list")}
+              className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                activeTab === "list"
+                  ? "text-green-600 border-b-2 border-green-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              <FaBook className="inline-block mr-2" />
+              日記一覧
+            </button>
+            <button
+              onClick={() => setActiveTab("create")}
+              className={`flex-1 py-3 px-4 text-center font-medium transition-colors ${
+                activeTab === "create"
+                  ? "text-green-600 border-b-2 border-green-600"
+                  : "text-gray-600 hover:text-gray-800"
+              }`}
+            >
+              <FaMapMarkerAlt className="inline-block mr-2" />
+              日記を登録
+            </button>
           </div>
 
           {/* エラー表示 */}
@@ -137,120 +164,157 @@ export default function DiaryPage() {
             </div>
           )}
 
-          {/* 地図エリア */}
-          <div className="mb-6">
-            <DiaryMap
-              onMapClick={handleMapClick}
-              diaries={diaries}
-              onDiaryClick={handleDiaryClick}
-              clickedLocation={clickedLocation}
-              showVisitedCountries={true}
-            />
-          </div>
+          {/* 一覧タブ */}
+          {activeTab === "list" && (
+            <>
+              {/* 地図エリア（読み取り専用） */}
+              <div className="mb-6">
+                <DiaryMap
+                  onMapClick={() => {}} // 一覧タブでは地図クリックを無効化
+                  diaries={diaries}
+                  onDiaryClick={handleDiaryClick}
+                  clickedLocation={null}
+                  showVisitedCountries={true}
+                />
+              </div>
 
-          {/* 日記一覧 */}
-          {diaries.length > 0 && (
-            <div className="mb-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <FaBook className="text-green-500" />
-                あなたの日記 ({diaries.length}件)
-              </h3>
-              <div className="space-y-6">
-                {(() => {
-                  // 日記を訪問日時の年月でグループ化
-                  const groupedDiaries: { [key: string]: TravelDiary[] } = {};
-                  diaries.forEach((diary) => {
-                    const date = new Date(diary.visited_at);
-                    const yearMonth = `${date.getFullYear()}年${date.getMonth() + 1}月`;
-                    if (!groupedDiaries[yearMonth]) {
-                      groupedDiaries[yearMonth] = [];
-                    }
-                    groupedDiaries[yearMonth].push(diary);
-                  });
+              {/* 日記一覧 */}
+              {diaries.length > 0 ? (
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <FaBook className="text-green-500" />
+                    あなたの日記 ({diaries.length}件)
+                  </h3>
+                  <div className="space-y-6">
+                    {(() => {
+                      // 日記を訪問日時の年月でグループ化
+                      const groupedDiaries: { [key: string]: TravelDiary[] } = {};
+                      diaries.forEach((diary) => {
+                        const date = new Date(diary.visited_at);
+                        const yearMonth = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+                        if (!groupedDiaries[yearMonth]) {
+                          groupedDiaries[yearMonth] = [];
+                        }
+                        groupedDiaries[yearMonth].push(diary);
+                      });
 
-                  // 年月を新しい順にソート
-                  const sortedYearMonths = Object.keys(groupedDiaries).sort((a, b) => {
-                    const [aYear, aMonth] = a.match(/\d+/g)!.map(Number);
-                    const [bYear, bMonth] = b.match(/\d+/g)!.map(Number);
-                    if (bYear !== aYear) return bYear - aYear;
-                    return bMonth - aMonth;
-                  });
+                      // 年月を新しい順にソート
+                      const sortedYearMonths = Object.keys(groupedDiaries).sort((a, b) => {
+                        const [aYear, aMonth] = a.match(/\d+/g)!.map(Number);
+                        const [bYear, bMonth] = b.match(/\d+/g)!.map(Number);
+                        if (bYear !== aYear) return bYear - aYear;
+                        return bMonth - aMonth;
+                      });
 
-                  return sortedYearMonths.map((yearMonth) => (
-                    <div key={yearMonth}>
-                      <h4 className="text-md font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
-                        {yearMonth}
-                      </h4>
-                      <div className="space-y-3">
-                        {groupedDiaries[yearMonth].map((diary) => (
-                          <Link
-                            key={diary.id}
-                            href={`/diary/detail?id=${diary.id}`}
-                            className="block"
-                          >
-                            <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition-shadow cursor-pointer">
-                              <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                  <h4 className="font-semibold text-gray-800 mb-1">
-                                    {diary.title}
-                                  </h4>
-                                  <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                                    {diary.content.length > 100
-                                      ? `${diary.content.substring(0, 100)}...`
-                                      : diary.content}
-                                  </p>
-                                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                      <FaMapMarkerAlt />
-                                      {Number(diary.latitude).toFixed(4)},{" "}
-                                      {Number(diary.longitude).toFixed(4)}
-                                    </span>
-                                    <span className="flex items-center gap-1">
-                                      <FaClock className="text-blue-500" />
-                                      訪問日時: {new Date(diary.visited_at).toLocaleString(
-                                        "ja-JP",
-                                        {
-                                          year: "numeric",
-                                          month: "2-digit",
-                                          day: "2-digit",
-                                          hour: "2-digit",
-                                          minute: "2-digit",
-                                        }
-                                      )}
-                                    </span>
+                      return sortedYearMonths.map((yearMonth) => (
+                        <div key={yearMonth}>
+                          <h4 className="text-md font-semibold text-gray-700 mb-3 border-b border-gray-200 pb-1">
+                            {yearMonth}
+                          </h4>
+                          <div className="space-y-3">
+                            {groupedDiaries[yearMonth].map((diary) => (
+                              <Link
+                                key={diary.id}
+                                href={`/diary/detail?id=${diary.id}`}
+                                className="block"
+                              >
+                                <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg p-4 border border-green-200 hover:shadow-md transition-shadow cursor-pointer">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-gray-800 mb-1">
+                                        {diary.title}
+                                      </h4>
+                                      <p className="text-sm text-gray-600 mb-2 line-clamp-2">
+                                        {diary.content.length > 100
+                                          ? `${diary.content.substring(0, 100)}...`
+                                          : diary.content}
+                                      </p>
+                                      <div className="flex items-center gap-4 text-xs text-gray-500">
+                                        <span className="flex items-center gap-1">
+                                          <FaMapMarkerAlt />
+                                          {Number(diary.latitude).toFixed(4)},{" "}
+                                          {Number(diary.longitude).toFixed(4)}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                          <FaClock className="text-blue-500" />
+                                          訪問日時: {new Date(diary.visited_at).toLocaleString(
+                                            "ja-JP",
+                                            {
+                                              year: "numeric",
+                                              month: "2-digit",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            }
+                                          )}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center ml-4">
+                                      <span className="p-2 text-gray-600 hover:text-green-600 transition-colors">
+                                        <FaEye size={16} title="詳細を見る" />
+                                      </span>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="flex items-center ml-4">
-                                  <span className="p-2 text-gray-600 hover:text-green-600 transition-colors">
-                                    <FaEye size={16} title="詳細を見る" />
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  ));
-                })()}
-              </div>
-            </div>
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 mb-4">まだ日記がありません</p>
+                  <button
+                    onClick={() => setActiveTab("create")}
+                    className="text-green-600 hover:text-green-700 font-medium underline"
+                  >
+                    日記を登録する
+                  </button>
+                </div>
+              )}
+            </>
           )}
 
-          {/* 日記作成フォーム */}
-          {showForm && (
-            <div className="mb-6">
-              <DiaryForm
-                onSubmit={handleCreateDiary}
-                onCancel={() => {
-                  setShowForm(false);
-                  setClickedLocation(null); // クリック位置のピンを削除
-                }}
-                clickedLocation={clickedLocation}
-                editingDiary={null}
-                isLoading={isLoading}
-              />
-            </div>
+          {/* 登録タブ */}
+          {activeTab === "create" && (
+            <>
+              <div className="mb-6">
+                <p className="text-gray-600 text-center">
+                  地図をクリックすると、ピンが表示され下に日記作成フォームが表示されます
+                </p>
+              </div>
+
+              {/* 地図エリア */}
+              <div className="mb-6">
+                <DiaryMap
+                  onMapClick={handleMapClick}
+                  diaries={diaries}
+                  onDiaryClick={handleDiaryClick}
+                  clickedLocation={clickedLocation}
+                  showVisitedCountries={true}
+                />
+              </div>
+
+              {/* 日記作成フォーム */}
+              {showForm && (
+                <div className="mb-6">
+                  <DiaryForm
+                    onSubmit={handleCreateDiary}
+                    onCancel={() => {
+                      setShowForm(false);
+                      setClickedLocation(null); // クリック位置のピンを削除
+                    }}
+                    clickedLocation={clickedLocation}
+                    editingDiary={null}
+                    isLoading={isLoading}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
