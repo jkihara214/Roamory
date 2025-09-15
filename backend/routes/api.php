@@ -31,6 +31,12 @@ Route::prefix('v1')->group(function () {
         ->name('verification.verify');
     Route::post('/email/resend-unverified', [AuthController::class, 'resendVerificationEmailForUnverified']);
     
+    // パスワードリセット（認証不要・専用レート制限あり）
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:password-reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:password-reset');
+    
     // 公開API（認証不要）
     Route::get('/countries', [CountryController::class, 'index']);
     
