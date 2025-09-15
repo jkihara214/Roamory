@@ -105,7 +105,11 @@ export default function LoginPage() {
 
             {resendError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                <p className="text-red-700 text-sm">{resendError}</p>
+                {resendError.split('\n').map((line, index) => (
+                  <p key={index} className="text-red-700 text-sm">
+                    {line}
+                  </p>
+                ))}
               </div>
             )}
 
@@ -216,10 +220,17 @@ export default function LoginPage() {
             </button>
           </form>
           <div className="mt-4 text-sm text-center">
-            アカウントをお持ちでない方は{" "}
-            <Link href="/register" className="text-blue-600 underline">
-              新規登録
-            </Link>
+            <div>
+              アカウントをお持ちでない方は{" "}
+              <Link href="/register" className="text-blue-600 underline">
+                新規登録
+              </Link>
+            </div>
+            <div className="mt-2">
+              <Link href="/forgot-password" className="text-blue-600 underline">
+                パスワードをお忘れの方
+              </Link>
+            </div>
           </div>
         </div>
       </div>
