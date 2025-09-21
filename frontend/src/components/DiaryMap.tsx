@@ -31,11 +31,30 @@ export default function DiaryMap({
   const onDiaryClickRef = useRef(onDiaryClick);
   const markersRef = useRef<L.Marker[]>([]);
   const clickedMarkerRef = useRef<L.Marker | null>(null);
-  const highlightLayersRef = useRef<L.Rectangle[]>([]);
+  const highlightLayersRef = useRef<L.GeoJSON[]>([]);
   const [showHelp, setShowHelp] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
   const [visitedCountryCodes, setVisitedCountryCodes] = useState<string[]>([]);
-  const [countryGeoJson, setCountryGeoJson] = useState<any>(null);
+  const [countryGeoJson, setCountryGeoJson] = useState<{
+    type: "FeatureCollection";
+    features: Array<{
+      type: "Feature";
+      properties: {
+        ISO_A2?: string;
+        ISO_A2_EH?: string;
+        WB_A2?: string;
+        POSTAL?: string;
+        NAME?: string;
+        NAME_JA?: string;
+        SUBREGION?: string;
+        CONTINENT?: string;
+      };
+      geometry: {
+        type: "Polygon" | "MultiPolygon";
+        coordinates: number[][][] | number[][][][];
+      };
+    }>;
+  } | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
 
   // refの値を更新
@@ -215,7 +234,7 @@ export default function DiaryMap({
     visitedCountryCodes.forEach((countryCode) => {
       // Natural Earth FeatureCollectionからの検索
       if (countryGeoJson?.features) {
-        const countryFeature = countryGeoJson.features.find((feature: any) => {
+        const countryFeature = countryGeoJson.features.find((feature) => {
           const props = feature.properties;
           // 複数のフィールドをチェック（Natural Earthデータの不整合に対応）
           return (
@@ -252,7 +271,7 @@ export default function DiaryMap({
               </div>
             `);
 
-          highlightLayersRef.current.push(geoJsonLayer as any);
+          highlightLayersRef.current.push(geoJsonLayer);
         }
       }
     });
