@@ -73,16 +73,36 @@ export default function RegisterPage() {
     };
   }, [clearRegistrationState]);
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) return "パスワードは8文字以上で入力してください。";
+    if (pwd.length > 20) return "パスワードは20文字以内で入力してください。";
+    if (!/[a-zA-Z]/.test(pwd) || !/\d/.test(pwd)) {
+      return "パスワードは英字と数字の両方を含む必要があります。";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // フロントエンドバリデーションチェック（submit時のみ）
+    const passwordError = validatePassword(password);
+    if (passwordError || password !== passwordConfirmation) {
+      // エラーは各入力欄の下に既に表示されるので、
+      // touchedフラグを立てて表示させる
+      setTouched({
+        name: true,
+        email: true,
+        password: true,
+        passwordConfirmation: true,
+      });
+      return;
+    }
+
     setRegisterAttempted(true);
     await register(name, email, password, passwordConfirmation);
   };
 
-  const handleTryAgain = () => {
-    clearRegistrationState();
-    clearResendState();
-  };
 
   const handleResendEmail = async () => {
     clearResendState();
@@ -137,18 +157,20 @@ export default function RegisterPage() {
 
             {resendError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
-                <p className="text-red-700 text-sm font-medium">
-                  {resendError}
-                </p>
+                {resendError.split('\n').map((line, index) => (
+                  <p key={index} className="text-red-700 text-sm font-medium">
+                    {line}
+                  </p>
+                ))}
               </div>
             )}
 
             {/* ボタンエリア */}
-            <div className="flex gap-3 pt-4 border-t border-green-200">
+            <div className="pt-4 border-t border-green-200">
               <button
                 onClick={handleResendEmail}
                 disabled={resendLoading}
-                className="flex-1 inline-flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-2 px-4 rounded-lg font-medium transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 text-white py-2 px-4 rounded-lg font-medium transition-colors"
               >
                 {resendLoading ? (
                   <>
@@ -161,12 +183,6 @@ export default function RegisterPage() {
                     認証メールを再送信
                   </>
                 )}
-              </button>
-              <button
-                onClick={handleTryAgain}
-                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-medium transition-colors"
-              >
-                別のアカウントを作成
               </button>
             </div>
           </div>
@@ -241,7 +257,7 @@ export default function RegisterPage() {
                   <input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="パスワード"
+                    placeholder="英字と数字を含む8～20文字"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onBlur={() =>
@@ -249,6 +265,8 @@ export default function RegisterPage() {
                     }
                     className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition pr-10 h-10"
                     required
+                    minLength={8}
+                    maxLength={20}
                   />
                   <button
                     type="button"
@@ -267,6 +285,14 @@ export default function RegisterPage() {
                     パスワードは必須です
                   </p>
                 )}
+                {touched.password && password && validatePassword(password) && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {validatePassword(password)}
+                  </p>
+                )}
+                <p className="text-gray-500 text-xs mt-1">
+                  ※ 英字と数字を含む8～20文字で入力してください
+                </p>
               </div>
               <div>
                 <label
@@ -310,8 +336,17 @@ export default function RegisterPage() {
                     パスワード（確認）は必須です
                   </p>
                 )}
+                {touched.passwordConfirmation && passwordConfirmation && password !== passwordConfirmation && (
+                  <p className="text-red-500 text-sm mt-1">
+                    パスワードが一致しません
+                  </p>
+                )}
               </div>
-              {error && <div className="text-red-500 text-sm">{error}</div>}
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                  <p className="text-red-700 text-sm">{error}</p>
+                </div>
+              )}
               <button
                 type="submit"
                 className="w-full bg-gradient-to-r from-blue-500 to-sky-400 hover:from-blue-600 hover:to-sky-500 text-white py-2 rounded-lg shadow-lg font-bold text-lg transition-all duration-200 disabled:opacity-50"

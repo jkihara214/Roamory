@@ -12,6 +12,11 @@ use App\Models\User;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\ResendVerificationEmailRequest;
+use App\Http\Requests\ForgotPasswordRequest;
+use App\Http\Requests\ResetPasswordRequest;
+use App\Notifications\PasswordChangedNotification;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -155,7 +160,7 @@ class AuthController extends Controller
         $key = 'resend_verification_' . $user->id;
         if (Cache::has($key)) {
             return response()->json([
-                'message' => '認証メールの再送信は5分間隔で行えます。',
+                'message' => "認証メールの再送信は5分間隔で行えます。\n既に送信済みのメールをご確認ください。\nメールが届かない場合は迷惑メールフォルダもご確認ください。",
             ], 429);
         }
 
@@ -186,7 +191,7 @@ class AuthController extends Controller
         $key = 'resend_verification_' . $user->id;
         if (Cache::has($key)) {
             return response()->json([
-                'message' => '認証メールの再送信は5分間隔で行えます。'
+                'message' => "認証メールの再送信は5分間隔で行えます。\n既に送信済みのメールをご確認ください。\nメールが届かない場合は迷惑メールフォルダもご確認ください。"
             ], 429);
         }
 
@@ -211,5 +216,79 @@ class AuthController extends Controller
             'email_verified' => $user->hasVerifiedEmail(),
             'email_verified_at' => $user->email_verified_at,
         ]);
+    }
+
+    /**
+     * パスワードリセットメール送信
+     */
+    public function forgotPassword(ForgotPasswordRequest $request)
+    {
+        $validated = $request->validated();
+        
+        // リセットリンクの送信制限（5分間隔）
+        $key = 'password_reset_' . $validated['email'];
+        if (Cache::has($key)) {
+            return response()->json([
+                'message' => "パスワードリセットメールの再送信は5分間隔で行えます。\n既に送信済みのメールをご確認ください。\nメールが届かない場合は迷惑メールフォルダもご確認ください。",
+            ], 429);
+        }
+
+        // メールアドレスが存在するかどうかに関わらず、同じレスポンスを返す（セキュリティ対策）
+        $user = User::where('email', $validated['email'])->first();
+        
+        if ($user) {
+            // ユーザーが存在する場合のみ実際にメールを送信
+            Password::sendResetLink($request->only('email'));
+        }
+        
+        // 5分間の制限を設定（存在しないメールアドレスでも制限をかける）
+        Cache::put($key, true, 300);
+        
+        // 常に同じ成功メッセージを返す
+        return response()->json([
+            'message' => 'メールアドレスが登録されている場合、パスワードリセットメールを送信しました。',
+        ]);
+    }
+
+    /**
+     * パスワードリセット
+     */
+    public function resetPassword(ResetPasswordRequest $request)
+    {
+        $validated = $request->validated();
+
+        // メールアドレスの存在確認（セキュリティのため、存在しない場合も同じエラーメッセージを返す）
+        $user = User::where('email', $validated['email'])->first();
+
+        if (!$user) {
+            // メールアドレスが存在しなくても、トークンエラーと同じメッセージを返す
+            return response()->json([
+                'message' => 'パスワードリセットトークンが無効です。',
+            ], 400);
+        }
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password)
+                ])->setRememberToken(Str::random(60));
+
+                $user->save();
+
+                // パスワード変更完了通知を送信
+                $user->notify(new PasswordChangedNotification());
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return response()->json([
+                'message' => 'パスワードがリセットされました。',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'パスワードリセットトークンが無効です。',
+        ], 400);
     }
 } 

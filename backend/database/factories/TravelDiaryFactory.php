@@ -18,6 +18,7 @@ class TravelDiaryFactory extends Factory
             'longitude' => $this->faker->longitude(-180, 180),
             'title' => $this->faker->sentence(3),
             'content' => $this->faker->paragraphs(2, true),
+            'visited_at' => $this->faker->dateTimeBetween('-1 year', 'now'),
         ];
     }
 } 

@@ -83,4 +83,10 @@ export const updateTravelDiary = (
 export const deleteTravelDiary = (id: number) =>
   api.delete(`/v1/travel-diaries/${id}`);
 
+// 訪問済み国関連
+export const getVisitedCountries = () => api.get("/v1/countries/visited");
+
+export const getVisitedCountryCodes = () =>
+  api.get("/v1/countries/visited-codes");
+
 export default api;

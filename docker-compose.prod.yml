@@ -19,6 +19,8 @@ services:
     volumes:
       - ./backend:/var/www/html
     environment:
+      - TZ=Asia/Tokyo
+      - APP_TIMEZONE=Asia/Tokyo
       - APP_ENV=${APP_ENV}
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}

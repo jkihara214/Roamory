@@ -46,16 +46,16 @@ export const getDefaultTileProvider = (): TileProvider => {
 // 地図の初期設定
 export const mapConfig = {
   center: [35.6762, 139.6503] as [number, number], // 東京
-  zoom: 4,
-  minZoom: 1,
+  zoom: 5,
+  minZoom: 2,
   maxZoom: 18,
   zoomControl: true,
   attributionControl: true,
 
-  // 地図の境界制限（緯度のみ制限、経度は無制限）
+  // 地図の境界制限（緯度のみ制限、経度は制限なし）
   maxBounds: [
-    [-90, -Infinity], // 南西角（南極、経度無制限）
-    [90, Infinity], // 北東角（北極、経度無制限）
+    [-90, -180], // 南西角
+    [90, 180], // 北東角
   ] as [[number, number], [number, number]],
 
   // アプリケーション情報（規約対応）

@@ -13,7 +13,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
-    <header className="bg-gradient-to-r from-sky-200 via-yellow-100 to-orange-100 shadow mb-2">
+    <header className="sticky top-0 z-[1100] bg-gradient-to-r from-sky-200 via-yellow-100 to-orange-100 shadow mb-2">
       <nav className="flex items-center px-6 py-3">
         <div className="flex-1 flex items-center gap-2">
           <FaGlobeAsia className="text-2xl text-blue-600 drop-shadow animate-spin-slow" />

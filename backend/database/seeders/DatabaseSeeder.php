@@ -23,10 +23,8 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CountriesTableSeeder::class,
             AdminsTableSeeder::class,
-            # Seederでは、トークンが発行されず、エラーが起こるためコメントアウト
-            # UsersTableSeeder::class,
-            # UsageHistoriesTableSeederは、ユーザーが作成されている必要があるのて登録後に個別で実行
-            # UsageHistoriesTableSeeder::class,
+            UsersTableSeeder::class,
+            UsageHistoriesTableSeeder::class,
             // 他にも必要なSeederがあればここに追加
         ]);
     }

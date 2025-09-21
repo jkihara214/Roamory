@@ -8,14 +8,15 @@ describe("Home (トップページ)", () => {
     // タイトル
     expect(screen.getByText("Roamory")).toBeInTheDocument();
     // キャッチコピー
-    expect(screen.getByText(/旅する、記憶を残す/)).toBeInTheDocument();
+    expect(screen.getByText(/旅の記憶を/)).toBeInTheDocument();
+    expect(screen.getByText(/永遠に残す/)).toBeInTheDocument();
     // 特徴カード
-    expect(screen.getByText("AI旅行プラン生成")).toBeInTheDocument();
-    expect(screen.getByText("地図×日記")).toBeInTheDocument();
-    expect(screen.getByText("訪問国の可視化")).toBeInTheDocument();
+    expect(screen.getByText("AI旅行プランナー")).toBeInTheDocument();
+    expect(screen.getByText("インタラクティブマップ")).toBeInTheDocument();
+    expect(screen.getByText("スマート写真解析")).toBeInTheDocument();
     // 行動喚起ボタン
     expect(
-      screen.getByRole("link", { name: "今すぐはじめる" })
+      screen.getByRole("link", { name: /無料で始める/ })
     ).toBeInTheDocument();
   });
 });
