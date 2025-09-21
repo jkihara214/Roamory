@@ -111,7 +111,7 @@ class AuthTest extends TestCase
         for ($i = 0; $i < 5; $i++) {
             $response = $this->postJson('/api/v1/login', [
                 'email' => 'test@example.com',
-                'password' => 'wrongpassword',
+                'password' => 'WrongPass456',
             ]);
             $response->assertStatus(401);
         }
@@ -146,7 +146,7 @@ class AuthTest extends TestCase
         for ($i = 0; $i < 4; $i++) {
             $response = $this->postJson('/api/v1/login', [
                 'email' => 'test@example.com',
-                'password' => 'wrongpassword',
+                'password' => 'WrongPass456',
             ]);
             $response->assertStatus(401);
         }

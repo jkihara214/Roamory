@@ -24,7 +24,14 @@ class ResetPasswordRequest extends FormRequest
         return [
             'token' => ['required', 'string'],
             'email' => ['required', 'email'],
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'password' => [
+                'required',
+                'string',
+                'min:8',
+                'max:20',
+                'confirmed',
+                'regex:/^(?=.*[a-zA-Z])(?=.*\d).+$/'
+            ],
         ];
     }
 
@@ -41,6 +48,8 @@ class ResetPasswordRequest extends FormRequest
             'email.email' => '有効なメールアドレスを入力してください。',
             'password.required' => 'パスワードは必須です。',
             'password.min' => 'パスワードは8文字以上で入力してください。',
+            'password.max' => 'パスワードは20文字以内で入力してください。',
+            'password.regex' => 'パスワードは英字と数字の両方を含む必要があります。',
             'password.confirmed' => 'パスワードが一致しません。',
         ];
     }

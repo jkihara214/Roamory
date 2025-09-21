@@ -23,16 +23,17 @@ export default function ForgotPasswordPage() {
       setSentEmail(email);
       setSuccess(true);
       setEmail("");
-    } catch (err: any) {
-      if (err.response?.status === 429) {
+    } catch (err: unknown) {
+      const error = err as { response?: { status?: number; data?: { message?: string } } };
+      if (error.response?.status === 429) {
         // 429エラーでもサーバーからの具体的なメッセージを優先
-        if (err.response?.data?.message) {
-          setError(err.response.data.message);
+        if (error.response?.data?.message) {
+          setError(error.response.data.message);
         } else {
           setError("パスワードリセットメールの再送信は5分間隔で行えます。しばらくお待ちください。");
         }
-      } else if (err.response?.data?.message) {
-        setError(err.response.data.message);
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message);
       } else {
         setError("エラーが発生しました。もう一度お試しください。");
       }

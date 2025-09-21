@@ -126,11 +126,20 @@ describe("DiaryPage (旅の日記画面)", () => {
       ).toBeInTheDocument();
     });
 
-    expect(
-      screen.getByText(
-        "地図をクリックすると、ピンが表示され下に日記作成フォームが表示されます"
-      )
-    ).toBeInTheDocument();
+    // 「日記を登録」タブに切り替える（アイコン付きのボタンを選択）
+    const createTabButtons = screen.getAllByRole("button", { name: /日記を登録/ });
+    const createTabButton = createTabButtons.find(button => button.querySelector('svg'));
+    await act(async () => {
+      fireEvent.click(createTabButton!);
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          "地図をクリックすると、ピンが表示され下に日記作成フォームが表示されます"
+        )
+      ).toBeInTheDocument();
+    });
 
     expect(screen.getByTestId("mock-diary-map")).toBeInTheDocument();
     expect(screen.getByTestId("mock-header")).toBeInTheDocument();
@@ -141,8 +150,15 @@ describe("DiaryPage (旅の日記画面)", () => {
       render(<DiaryPage />);
     });
 
+    // 「日記を登録」タブに切り替える（アイコン付きのボタンを選択）
+    const createTabButtons = screen.getAllByRole("button", { name: /日記を登録/ });
+    const createTabButton = createTabButtons.find(button => button.querySelector('svg'));
+    await act(async () => {
+      fireEvent.click(createTabButton!);
+    });
+
     // 初期状態では日記作成フォームは表示されない
-    expect(screen.queryByText("新しい日記を作成")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/タイトル/)).not.toBeInTheDocument();
 
     // 地図をクリック（モック）
     const mapClickButton = screen.getByTestId("mock-map-click");
@@ -151,11 +167,10 @@ describe("DiaryPage (旅の日記画面)", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText("新しい日記を作成")).toBeInTheDocument();
+      // フォーム要素が表示される
+      expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument();
     });
 
-    // フォーム要素が表示される
-    expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument();
     expect(screen.getByLabelText(/訪問日時/)).toBeInTheDocument();
     expect(screen.getByLabelText(/内容/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "保存" })).toBeInTheDocument();
@@ -348,6 +363,13 @@ describe("DiaryPage (旅の日記画面)", () => {
         render(<DiaryPage />);
       });
 
+      // 「日記を登録」タブに切り替える（アイコン付きのボタンを選択）
+      const createTabButtons = screen.getAllByRole("button", { name: /日記を登録/ });
+      const createTabButton = createTabButtons.find(button => button.querySelector('svg'));
+      await act(async () => {
+        fireEvent.click(createTabButton!);
+      });
+
       // 地図をクリックしてフォームを表示
       const mapClickButton = screen.getByTestId("mock-map-click");
       await act(async () => {
@@ -355,7 +377,7 @@ describe("DiaryPage (旅の日記画面)", () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText("新しい日記を作成")).toBeInTheDocument();
+        expect(screen.getByLabelText(/タイトル/)).toBeInTheDocument();
       });
 
       // キャンセルボタンをクリック
@@ -366,7 +388,7 @@ describe("DiaryPage (旅の日記画面)", () => {
 
       // フォームが閉じる
       await waitFor(() => {
-        expect(screen.queryByText("新しい日記を作成")).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(/タイトル/)).not.toBeInTheDocument();
       });
     });
   });

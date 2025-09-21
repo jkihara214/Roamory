@@ -63,7 +63,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
       ).toBeInTheDocument();
       
       expect(
-        screen.getByPlaceholderText("8文字以上のパスワード")
+        screen.getByPlaceholderText("英字と数字を含む8～20文字")
       ).toBeInTheDocument();
       
       expect(
@@ -87,7 +87,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
 
     it("パスワードと確認パスワードを入力するとボタンがenabledになる", async () => {
       render(<ResetPasswordPage />);
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
       
@@ -99,7 +99,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
 
     it("パスワード表示/非表示の切り替えができる", async () => {
       render(<ResetPasswordPage />);
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード") as HTMLInputElement;
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字") as HTMLInputElement;
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力") as HTMLInputElement;
       
       // 初期状態はpassword type
@@ -121,7 +121,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
 
     it("パスワードが一致しない場合エラーメッセージが表示される", async () => {
       render(<ResetPasswordPage />);
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
       
@@ -134,7 +134,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
 
     it("パスワードが8文字未満の場合エラーメッセージが表示される", async () => {
       render(<ResetPasswordPage />);
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
       
@@ -142,9 +142,9 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
       await userEvent.type(confirmInput, "short");
       await userEvent.click(button);
       
-      expect(
-        screen.getByText("パスワードは8文字以上で入力してください。")
-      ).toBeInTheDocument();
+      // 複数のエラーメッセージが表示される可能性があるので、少なくとも1つあることを確認
+      const errors = screen.getAllByText("パスワードは8文字以上で入力してください。");
+      expect(errors.length).toBeGreaterThanOrEqual(1);
     });
 
     it.skip("リセット成功時に成功画面が表示され、3秒後にログイン画面へ遷移する", async () => {
@@ -162,7 +162,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
         expect(screen.getByRole("heading", { name: "新しいパスワードを設定" })).toBeInTheDocument();
       }, { timeout: 5000 });
 
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
 
@@ -221,7 +221,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
         expect(screen.getByRole("heading", { name: "新しいパスワードを設定" })).toBeInTheDocument();
       }, { timeout: 5000 });
 
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
 
@@ -268,7 +268,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
         expect(screen.getByRole("heading", { name: "新しいパスワードを設定" })).toBeInTheDocument();
       }, { timeout: 5000 });
 
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
 
@@ -296,7 +296,7 @@ describe("ResetPasswordPage (パスワードリセット画面)", () => {
         expect(screen.getByRole("heading", { name: "新しいパスワードを設定" })).toBeInTheDocument();
       }, { timeout: 5000 });
 
-      const passwordInput = screen.getByPlaceholderText("8文字以上のパスワード");
+      const passwordInput = screen.getByPlaceholderText("英字と数字を含む8～20文字");
       const confirmInput = screen.getByPlaceholderText("パスワードを再入力");
       const button = screen.getByRole("button", { name: "パスワードをリセット" });
 

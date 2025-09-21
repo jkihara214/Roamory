@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import Header from "@/components/Header";
@@ -25,7 +25,7 @@ const DiaryMap = dynamic(() => import("@/components/DiaryMap"), {
   ),
 });
 
-export default function DiaryDetailPage() {
+function DiaryDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
@@ -328,5 +328,13 @@ export default function DiaryDetailPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function DiaryDetailPage() {
+  return (
+    <Suspense fallback={<AuthLoadingModal />}>
+      <DiaryDetailContent />
+    </Suspense>
   );
 }

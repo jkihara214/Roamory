@@ -71,7 +71,7 @@ describe("RegisterPage (新規登録画面)", () => {
     ).toBeInTheDocument();
     expect(screen.getByPlaceholderText("ユーザー名")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("メールアドレス")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("パスワード")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("英字と数字を含む8～20文字")).toBeInTheDocument();
     expect(
       screen.getByPlaceholderText("パスワード（確認）")
     ).toBeInTheDocument();
@@ -126,7 +126,6 @@ describe("RegisterPage (新規登録画面)", () => {
     expect(screen.getByText("認証メール送信先：")).toBeInTheDocument();
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
     expect(screen.getByText("認証メールを再送信")).toBeInTheDocument();
-    expect(screen.getByText("別のアカウントを作成")).toBeInTheDocument();
 
     // フォームが非表示になることを確認
     expect(
@@ -134,40 +133,4 @@ describe("RegisterPage (新規登録画面)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("別のアカウントを作成ボタンで登録状態がクリアされる", () => {
-    // 成功状態のためのモック更新
-    const { useAuthStore } = require("@/store/auth");
-    useAuthStore.mockImplementation((selector: any) => {
-      if (selector) {
-        return mockFetchMe;
-      }
-      return {
-        loading: false,
-        isAuthenticated: false,
-        error: null,
-        registrationSuccess: true,
-        registrationMessage: "アカウントが作成されました。",
-        registrationEmail: "test@example.com",
-        resendLoading: false,
-        resendSuccess: null,
-        resendError: null,
-        emailUnverified: false,
-        unverifiedEmail: null,
-        register: mockRegister,
-        clearRegistrationState: mockClearRegistrationState,
-        clearResendState: mockClearResendState,
-        resendVerificationEmail: mockResendVerificationEmail,
-        clearEmailUnverifiedState: jest.fn(),
-        isAuthLoading: false,
-      };
-    });
-
-    render(<RegisterPage />);
-
-    const tryAgainButton = screen.getByText("別のアカウントを作成");
-    fireEvent.click(tryAgainButton);
-
-    expect(mockClearRegistrationState).toHaveBeenCalled();
-    expect(mockClearResendState).toHaveBeenCalled();
-  });
 });

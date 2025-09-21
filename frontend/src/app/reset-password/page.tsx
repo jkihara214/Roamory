@@ -26,16 +26,27 @@ function ResetPasswordForm() {
     }
   }, [token, email]);
 
+  const validatePassword = (pwd: string): string | null => {
+    if (pwd.length < 8) return "パスワードは8文字以上で入力してください。";
+    if (pwd.length > 20) return "パスワードは20文字以内で入力してください。";
+    if (!/[a-zA-Z]/.test(pwd) || !/\d/.test(pwd)) {
+      return "パスワードは英字と数字の両方を含む必要があります。";
+    }
+    return null;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (password !== passwordConfirmation) {
-      setError("パスワードが一致しません。");
+
+    // パスワードバリデーション
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
-    if (password.length < 8) {
-      setError("パスワードは8文字以上で入力してください。");
+    if (password !== passwordConfirmation) {
+      setError("パスワードが一致しません。");
       return;
     }
 
@@ -53,9 +64,10 @@ function ResetPasswordForm() {
       setTimeout(() => {
         router.push("/login");
       }, 3000);
-    } catch (err: any) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message);
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
       } else {
         setError("エラーが発生しました。もう一度お試しください。");
       }
@@ -142,13 +154,14 @@ function ResetPasswordForm() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="8文字以上のパスワード"
+                  placeholder="英字と数字を含む8～20文字"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition pr-10"
                   required
                   disabled={loading}
                   minLength={8}
+                  maxLength={20}
                 />
                 <button
                   type="button"
@@ -160,6 +173,14 @@ function ResetPasswordForm() {
                   {showPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+              {password && validatePassword(password) && (
+                <p className="text-red-500 text-sm mt-1">
+                  {validatePassword(password)}
+                </p>
+              )}
+              <p className="text-gray-500 text-xs mt-1">
+                ※ 英字と数字を含む8～20文字で入力してください
+              </p>
             </div>
 
             <div>
@@ -180,6 +201,7 @@ function ResetPasswordForm() {
                   required
                   disabled={loading}
                   minLength={8}
+                  maxLength={20}
                 />
                 <button
                   type="button"
@@ -191,6 +213,11 @@ function ResetPasswordForm() {
                   {showPasswordConfirmation ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+              {passwordConfirmation && password !== passwordConfirmation && (
+                <p className="text-red-500 text-sm mt-1">
+                  パスワードが一致しません
+                </p>
+              )}
             </div>
 
             {error && (
