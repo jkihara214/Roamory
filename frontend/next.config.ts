@@ -4,8 +4,8 @@ const nextConfig: NextConfig = {
   /* config options here */
   output: "export",
   trailingSlash: true,
-  // 静的エクスポート時にアセットパスを相対パスにする
-  assetPrefix: "./",
+  // 本番環境用の設定（CloudFront経由でアクセスする場合）
+  assetPrefix: process.env.NODE_ENV === 'production' ? 'https://roamory.com' : '',
 };
 
 export default nextConfig;
