@@ -108,30 +108,53 @@ class AuthController extends Controller
      */
     public function verifyEmail(Request $request, $id, $hash)
     {
-        $frontendUrl = env("FRONTEND_URL", "http://localhost:3000");
-        
         try {
             $user = User::findOrFail($id);
 
             // ハッシュの検証
             if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
-                return redirect($frontendUrl . "/email-verification?status=invalid");
+                if (config('app.env') === 'production') {
+                    return redirect()->away(url('/email-verification?status=invalid'));
+                } else {
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                    return redirect()->away($frontendUrl . '/email-verification?status=invalid');
+                }
             }
 
             // 既に認証済みの場合
             if ($user->hasVerifiedEmail()) {
-                return redirect($frontendUrl . "/email-verification?status=already_verified&email=" . urlencode($user->email));
+                if (config('app.env') === 'production') {
+                    return redirect()->away(url('/email-verification?status=already_verified&email=' . urlencode($user->email)));
+                } else {
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                    return redirect()->away($frontendUrl . '/email-verification?status=already_verified&email=' . urlencode($user->email));
+                }
             }
 
             // メール認証を完了
             if ($user->markEmailAsVerified()) {
-                return redirect($frontendUrl . "/email-verification?status=success&email=" . urlencode($user->email));
+                if (config('app.env') === 'production') {
+                    return redirect()->away(url('/email-verification?status=success&email=' . urlencode($user->email)));
+                } else {
+                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                    return redirect()->away($frontendUrl . '/email-verification?status=success&email=' . urlencode($user->email));
+                }
             }
 
-            return redirect($frontendUrl . "/email-verification?status=error");
-            
+            if (config('app.env') === 'production') {
+                return redirect()->away(url('/email-verification?status=error'));
+            } else {
+                $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                return redirect()->away($frontendUrl . '/email-verification?status=error');
+            }
+
         } catch (\Exception $e) {
-            return redirect($frontendUrl . "/email-verification?status=error");
+            if (config('app.env') === 'production') {
+                return redirect()->away(url('/email-verification?status=error'));
+            } else {
+                $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                return redirect()->away($frontendUrl . '/email-verification?status=error');
+            }
         }
     }
 

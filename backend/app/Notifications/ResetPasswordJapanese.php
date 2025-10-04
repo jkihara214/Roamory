@@ -15,8 +15,13 @@ class ResetPasswordJapanese extends ResetPassword
      */
     public function toMail($notifiable)
     {
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-        $resetUrl = $frontendUrl . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
+        // 本番環境では url() を使用、開発環境では FRONTEND_URL を使用
+        if (config('app.env') === 'production') {
+            $resetUrl = url('/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email));
+        } else {
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            $resetUrl = $frontendUrl . '/reset-password?token=' . $this->token . '&email=' . urlencode($notifiable->email);
+        }
 
         // 有効期限を計算（現在時刻 + 60分）
         $expiresAt = now()->addMinutes(config('auth.passwords.users.expire', 60));
