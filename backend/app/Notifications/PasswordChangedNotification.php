@@ -38,8 +38,13 @@ class PasswordChangedNotification extends Notification
      */
     public function toMail($notifiable)
     {
-        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-        $loginUrl = $frontendUrl . '/login';
+        // 本番環境では url() を使用、開発環境では FRONTEND_URL を使用
+        if (config('app.env') === 'production') {
+            $loginUrl = url('/login');
+        } else {
+            $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+            $loginUrl = $frontendUrl . '/login';
+        }
         $changedAt = now()->format('Y年m月d日 H:i');
 
         return (new MailMessage)

@@ -22,7 +22,7 @@ services:
       - TZ=Asia/Tokyo
       - APP_TIMEZONE=Asia/Tokyo
       - APP_ENV=${APP_ENV}
-      - APP_URL=https://api.roamory.com
+      - APP_URL=https://roamory.com
       - DB_HOST=${DB_HOST}
       - DB_PORT=${DB_PORT}
       - DB_DATABASE=${DB_DATABASE}
