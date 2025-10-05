@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\URL;
 use App\Notifications\VerifyEmailJapanese;
 use Tests\TestCase;
 use App\Models\User;
@@ -173,14 +174,19 @@ class AuthTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        // 認証リンクを生成
+        // 署名付き認証リンクを生成
         $hash = sha1($user->email);
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => $hash]
+        );
 
-        $response = $this->get("/api/v1/email/verify/{$user->id}/{$hash}");
+        $response = $this->get($url);
 
-        // リダイレクトレスポンスを期待
-        $response->assertStatus(302)
-            ->assertRedirect('http://localhost:3000/email-verification?status=success&email=' . urlencode($user->email));
+        // リダイレクトレスポンスを期待（トークン付き自動ログインページへ）
+        $response->assertStatus(302);
+        $this->assertStringStartsWith('http://localhost:3000/auth/email-verified?token=', $response->headers->get('Location'));
 
         // データベースで認証済みになっていることを確認
         $this->assertNotNull($user->fresh()->email_verified_at);
@@ -193,11 +199,18 @@ class AuthTest extends TestCase
             'email_verified_at' => null,
         ]);
 
-        $response = $this->get("/api/v1/email/verify/{$user->id}/invalid-hash");
+        // 署名付きURLを生成（ハッシュは無効）
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => 'invalid-hash']
+        );
 
-        // リダイレクトレスポンスを期待
+        $response = $this->get($url);
+
+        // エラーページへのリダイレクトを期待
         $response->assertStatus(302)
-            ->assertRedirect('http://localhost:3000/email-verification?status=invalid');
+            ->assertRedirect('http://localhost:3000/auth/email-verification-error');
     }
 
     public function test_email_verification_already_verified()
@@ -207,13 +220,19 @@ class AuthTest extends TestCase
             'email_verified_at' => now(),
         ]);
 
+        // 署名付き認証リンクを生成
         $hash = sha1($user->email);
+        $url = URL::temporarySignedRoute(
+            'verification.verify',
+            now()->addMinutes(60),
+            ['id' => $user->id, 'hash' => $hash]
+        );
 
-        $response = $this->get("/api/v1/email/verify/{$user->id}/{$hash}");
+        $response = $this->get($url);
 
-        // リダイレクトレスポンスを期待
-        $response->assertStatus(302)
-            ->assertRedirect('http://localhost:3000/email-verification?status=already_verified&email=' . urlencode($user->email));
+        // リダイレクトレスポンスを期待（既に認証済みでもトークン付き自動ログインページへ）
+        $response->assertStatus(302);
+        $this->assertStringStartsWith('http://localhost:3000/auth/email-verified?token=', $response->headers->get('Location'));
     }
 
     public function test_resend_verification_email_for_unverified_user()

@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
     
     // メール認証（認証不要）
     Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])
+        ->middleware('signed')
         ->name('verification.verify');
     Route::post('/email/resend-unverified', [AuthController::class, 'resendVerificationEmailForUnverified']);
     
