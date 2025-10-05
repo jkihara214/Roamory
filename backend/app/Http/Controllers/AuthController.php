@@ -5,9 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Auth\Events\Registered;
-use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
 use App\Models\User;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\LoginRequest;
@@ -111,49 +110,64 @@ class AuthController extends Controller
         try {
             $user = User::findOrFail($id);
 
-            // ハッシュの検証
+            // 【第2層: hash検証】ユーザーIDとメールアドレスの一致確認
+            // - signature検証（第1層）を通過しても、このhash検証が必要な理由:
+            //   1. 多層防御（Defense in Depth）- セキュリティの基本原則
+            //   2. メールアドレス変更後の古いURLを無効化
+            //      例: ユーザーがメールアドレスを変更した場合、
+            //          古いURLのhashは新しいメールアドレスと一致しないため拒否される
+            //   3. signatureをすり抜けた場合の最後の砦
             if (!hash_equals(sha1($user->getEmailForVerification()), $hash)) {
                 if (config('app.env') === 'production') {
-                    return redirect()->away(url('/email-verification?status=invalid'));
+                    return response('', 302, ['Location' => 'https://roamory.com/auth/email-verification-error/']);
                 } else {
                     $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-                    return redirect()->away($frontendUrl . '/email-verification?status=invalid');
+                    return redirect()->away($frontendUrl . '/auth/email-verification-error');
                 }
             }
 
-            // 既に認証済みの場合
-            if ($user->hasVerifiedEmail()) {
-                if (config('app.env') === 'production') {
-                    return redirect()->away(url('/email-verification?status=already_verified&email=' . urlencode($user->email)));
-                } else {
-                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-                    return redirect()->away($frontendUrl . '/email-verification?status=already_verified&email=' . urlencode($user->email));
+            // 既に認証済みかチェック、未認証なら認証処理を実行
+            if (!$user->hasVerifiedEmail()) {
+                // 【第3層: メール認証失敗処理】データベースエラーなど予期しない失敗を処理
+                // - markEmailAsVerified()がfalseを返した場合（稀なケース）
+                // - データベースの整合性エラーなど
+                if (!$user->markEmailAsVerified()) {
+                    if (config('app.env') === 'production') {
+                        return response('', 302, ['Location' => 'https://roamory.com/auth/email-verification-error/']);
+                    } else {
+                        $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
+                        return redirect()->away($frontendUrl . '/auth/email-verification-error');
+                    }
                 }
             }
 
-            // メール認証を完了
-            if ($user->markEmailAsVerified()) {
-                if (config('app.env') === 'production') {
-                    return redirect()->away(url('/email-verification?status=success&email=' . urlencode($user->email)));
-                } else {
-                    $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-                    return redirect()->away($frontendUrl . '/email-verification?status=success&email=' . urlencode($user->email));
-                }
-            }
+            // トークンを発行して自動ログイン（認証済み・認証完了どちらも共通）
+            $token = $user->createToken('api-token')->plainTextToken;
 
             if (config('app.env') === 'production') {
-                return redirect()->away(url('/email-verification?status=error'));
+                $redirectUrl = 'https://roamory.com/auth/email-verified/?token=' . $token;
+                return response('', 302, ['Location' => $redirectUrl]);
             } else {
                 $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-                return redirect()->away($frontendUrl . '/email-verification?status=error');
+                $redirectUrl = $frontendUrl . '/auth/email-verified?token=' . $token;
+                return redirect()->away($redirectUrl);
             }
 
         } catch (\Exception $e) {
+            // 【第4層: 例外処理】予期しない例外をキャッチ
+            // - ユーザーが存在しない（findOrFail）
+            // - データベースダウン
+            // - その他の予期しないエラー
+            // - セキュリティ上、詳細なエラー情報はログにのみ記録し、ユーザーには一律「認証エラー」を表示
+            Log::error('Email verification exception', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             if (config('app.env') === 'production') {
-                return redirect()->away(url('/email-verification?status=error'));
+                return response('', 302, ['Location' => 'https://roamory.com/auth/email-verification-error/']);
             } else {
                 $frontendUrl = env('FRONTEND_URL', 'http://localhost:3000');
-                return redirect()->away($frontendUrl . '/email-verification?status=error');
+                return redirect()->away($frontendUrl . '/auth/email-verification-error');
             }
         }
     }
