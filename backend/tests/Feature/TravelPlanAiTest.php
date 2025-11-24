@@ -46,8 +46,8 @@ class TravelPlanAiTest extends TestCase
 
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
             'must_go_places' => ['東京', '京都'],
         ];
@@ -76,8 +76,8 @@ class TravelPlanAiTest extends TestCase
 
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
             // must_go_places省略
         ];
@@ -106,8 +106,8 @@ class TravelPlanAiTest extends TestCase
 
         $payload = [
             // countryがない
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
         ];
 
@@ -128,8 +128,8 @@ class TravelPlanAiTest extends TestCase
         ]);
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
         ];
         $response = $this->postJson('/api/v1/travel-plans/generate', $payload);
@@ -150,8 +150,8 @@ class TravelPlanAiTest extends TestCase
         ]);
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
         ];
         for ($i = 0; $i < 5; $i++) {
@@ -179,8 +179,8 @@ class TravelPlanAiTest extends TestCase
         ]);
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
         ];
         $this->withHeader('Authorization', 'Bearer ' . $token)
@@ -199,8 +199,8 @@ class TravelPlanAiTest extends TestCase
         // Countryデータを作成しない
         $payload = [
             'country' => '日本',
-            'start_date' => '2024-07-01',
-            'end_date' => '2024-07-05',
+            'start_date' => '2024-07-01 09:00:00',
+            'end_date' => '2024-07-05 18:00:00',
             'budget' => 100000,
         ];
         $response = $this->withHeader('Authorization', 'Bearer ' . $token)
