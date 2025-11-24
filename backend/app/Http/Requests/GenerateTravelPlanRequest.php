@@ -25,8 +25,8 @@ class GenerateTravelPlanRequest extends FormRequest
     {
         return [
             'country' => 'required|string',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'start_date' => 'required|date_format:Y-m-d H:i:s',
+            'end_date' => 'required|date_format:Y-m-d H:i:s|after:start_date',
             'budget' => 'required|integer',
             'must_go_places' => 'array',
             'must_go_places.*' => 'string',
@@ -43,11 +43,11 @@ class GenerateTravelPlanRequest extends FormRequest
         return [
             'country.required' => '国名は必須です。',
             'country.string' => '国名は文字列で入力してください。',
-            'start_date.required' => '開始日は必須です。',
-            'start_date.date' => '開始日は有効な日付で入力してください。',
-            'end_date.required' => '終了日は必須です。',
-            'end_date.date' => '終了日は有効な日付で入力してください。',
-            'end_date.after_or_equal' => '終了日は開始日以降の日付を入力してください。',
+            'start_date.required' => '入国日時は必須です。',
+            'start_date.date_format' => '入国日時は有効な日時で入力してください（形式：YYYY-MM-DD HH:MM:SS）。',
+            'end_date.required' => '出国日時は必須です。',
+            'end_date.date_format' => '出国日時は有効な日時で入力してください（形式：YYYY-MM-DD HH:MM:SS）。',
+            'end_date.after' => '出国日時は入国日時より後の日時を入力してください。',
             'budget.required' => '予算は必須です。',
             'budget.integer' => '予算は整数で入力してください。',
             'must_go_places.array' => '必ず行きたい場所は配列で入力してください。',

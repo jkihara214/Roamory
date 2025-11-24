@@ -103,8 +103,11 @@ class TravelPlanAiController extends Controller
 
 ## 条件
 - **国**: {$request->country}
-- **期間**: {$request->start_date} 〜 {$request->end_date}
+- **旅行期間**: {$request->start_date}（現地到着日時） 〜 {$request->end_date}（現地出発日時）
 - **予算**: {$request->budget}円
+
+**注意**:
+- 現地到着日時と出発日時を考慮し、実際に観光できる時間帯に合わせてプランを作成してください
 EOT;
 
         $places = $request->must_go_places ?? [];

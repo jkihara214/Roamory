@@ -110,8 +110,8 @@ describe("TravelPlanPage (旅行プラン生成画面)", () => {
     await waitFor(() => {
       expect(screen.getByText("旅行プラン生成")).toBeInTheDocument();
       expect(screen.getByLabelText("国名")).toBeInTheDocument();
-      expect(screen.getByLabelText("出国日")).toBeInTheDocument();
-      expect(screen.getByLabelText("帰国日")).toBeInTheDocument();
+      expect(screen.getByLabelText("入国日時（旅行先）")).toBeInTheDocument();
+      expect(screen.getByLabelText("出国日時（旅行先）")).toBeInTheDocument();
       expect(screen.getByLabelText("予算（円）")).toBeInTheDocument();
       expect(screen.getByLabelText("必ず行きたい場所")).toBeInTheDocument();
       expect(

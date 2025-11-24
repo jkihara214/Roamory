@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { ja } from "date-fns/locale";
 import { FaMapMarkedAlt, FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
@@ -71,10 +72,21 @@ export default function TravelPlanPage() {
     setLoading(true);
     setError(null);
     try {
+      const formatDateTime = (date: Date | null): string => {
+        if (!date) return "";
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
+
       const res = await generateTravelPlan({
         country,
-        start_date: startDate?.toISOString().slice(0, 10) ?? "",
-        end_date: endDate?.toISOString().slice(0, 10) ?? "",
+        start_date: formatDateTime(startDate),
+        end_date: formatDateTime(endDate),
         budget,
         must_go_places: places.length > 0 ? places : undefined,
       });
@@ -139,24 +151,36 @@ export default function TravelPlanPage() {
                   className="block mb-1 font-semibold text-gray-700"
                   htmlFor="startDate"
                 >
-                  出国日
+                  入国日時（旅行先）
                 </label>
                 <DatePicker
                   id="startDate"
                   selected={startDate}
-                  onChange={(date: Date | null) => setStartDate(date)}
+                  onChange={(date: Date | null) => {
+                    setStartDate(date);
+                    // 出国日時が新しい入国日時より前または同じ場合、クリアする
+                    if (date && endDate && endDate <= date) {
+                      setEndDate(null);
+                    }
+                  }}
                   onBlur={() =>
                     setTouched((prev) => ({ ...prev, startDate: true }))
                   }
                   selectsStart
                   startDate={startDate}
                   endDate={endDate}
-                  dateFormat="yyyy-MM-dd"
-                  placeholderText="出国日"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy-MM-dd (EEE) HH:mm"
+                  placeholderText="入国日時（旅行先）"
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
                   autoComplete="off"
+                  locale={ja}
+                  isClearable
+                  todayButton="今日"
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";
@@ -165,7 +189,7 @@ export default function TravelPlanPage() {
                   }}
                 />
                 {touched.startDate && !startDate && (
-                  <p className="text-red-500 text-sm mt-1">出国日は必須です</p>
+                  <p className="text-red-500 text-sm mt-1">入国日時は必須です</p>
                 )}
               </div>
               <div className="flex-1">
@@ -173,12 +197,20 @@ export default function TravelPlanPage() {
                   className="block mb-1 font-semibold text-gray-700"
                   htmlFor="endDate"
                 >
-                  帰国日
+                  出国日時（旅行先）
                 </label>
                 <DatePicker
                   id="endDate"
                   selected={endDate}
-                  onChange={(date: Date | null) => setEndDate(date)}
+                  onChange={(date: Date | null) => {
+                    // 出国日時が入国日時より後の場合のみ設定
+                    if (!date) {
+                      setEndDate(null);
+                    } else if (!startDate || date > startDate) {
+                      setEndDate(date);
+                    }
+                    // それ以外（入国日時以前）の場合は何もしない
+                  }}
                   onBlur={() =>
                     setTouched((prev) => ({ ...prev, endDate: true }))
                   }
@@ -186,12 +218,31 @@ export default function TravelPlanPage() {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={startDate ?? undefined}
-                  dateFormat="yyyy-MM-dd"
-                  placeholderText="帰国日"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy-MM-dd (EEE) HH:mm"
+                  placeholderText="出国日時（旅行先）"
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
                   autoComplete="off"
+                  locale={ja}
+                  isClearable
+                  todayButton="今日"
+                  filterTime={(time) => {
+                    if (!startDate) return true;
+                    const selectedDate = endDate || new Date();
+                    // 同じ日付の場合のみ時間をフィルタリング
+                    if (
+                      selectedDate.getFullYear() === startDate.getFullYear() &&
+                      selectedDate.getMonth() === startDate.getMonth() &&
+                      selectedDate.getDate() === startDate.getDate()
+                    ) {
+                      return time.getTime() > startDate.getTime();
+                    }
+                    return true;
+                  }}
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";
@@ -200,7 +251,7 @@ export default function TravelPlanPage() {
                   }}
                 />
                 {touched.endDate && !endDate && (
-                  <p className="text-red-500 text-sm mt-1">帰国日は必須です</p>
+                  <p className="text-red-500 text-sm mt-1">出国日時は必須です</p>
                 )}
               </div>
             </div>
