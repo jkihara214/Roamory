@@ -12,7 +12,7 @@ class CountryController extends Controller
     public function index()
     {
         // 必要なカラムのみ返す
-        $countries = Country::select('id', 'name_ja', 'name_en', 'code', 'geojson_url')->get();
+        $countries = Country::select('id', 'name_ja', 'name_en', 'name_ja_hiragana', 'code', 'geojson_url')->get();
         return response()->json($countries);
     }
 

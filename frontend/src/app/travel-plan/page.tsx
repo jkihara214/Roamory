@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -13,6 +13,14 @@ import LoadingModal from "@/components/LoadingModal";
 import ReactMarkdown from "react-markdown";
 import type { HTMLAttributes } from "react";
 import { isAxiosError } from "axios";
+import Select, { SingleValue, SelectInstance } from "react-select";
+
+type CountryOption = {
+  value: string;
+  label: string;
+  name_en: string;
+  name_ja_hiragana: string;
+};
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -24,10 +32,14 @@ export default function TravelPlanPage() {
   const [placeInput, setPlaceInput] = useState("");
   const [places, setPlaces] = useState<string[]>([]);
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
-  const [countries, setCountries] = useState<
-    { id: number; name_ja: string; name_en: string; code: string }[]
-  >([]);
+  const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+
+  // react-selectのrefを作成（labelクリック時にフォーカスするため）
+  const selectRef = useRef<SelectInstance<CountryOption>>(null);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
@@ -41,8 +53,27 @@ export default function TravelPlanPage() {
 
   useEffect(() => {
     getCountries()
-      .then((res) => setCountries(res.data))
-      .catch(() => setCountries([]));
+      .then((res) => {
+        // react-selectのオプション形式に変換
+        const options: CountryOption[] = res.data.map(
+          (c: {
+            id: number;
+            name_ja: string;
+            name_en: string;
+            name_ja_hiragana: string;
+            code: string;
+          }) => ({
+            value: c.name_ja,
+            label: c.name_ja,
+            name_en: c.name_en,
+            name_ja_hiragana: c.name_ja_hiragana || "",
+          })
+        );
+        setCountryOptions(options);
+      })
+      .catch(() => {
+        setCountryOptions([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -54,6 +85,35 @@ export default function TravelPlanPage() {
   const formatBudget = (value: string) => {
     const num = value.replace(/[^0-9]/g, "");
     return num ? parseInt(num, 10).toLocaleString() : "";
+  };
+
+  // カスタムフィルター関数: 日本語名、英語名、ひらがなの全てで検索可能
+  const customFilterOption = (
+    option: { data: CountryOption },
+    inputValue: string
+  ) => {
+    const searchTerm = inputValue.toLowerCase();
+    const labelMatch = option.data.label.toLowerCase().includes(searchTerm);
+    const nameEnMatch = option.data.name_en.toLowerCase().includes(searchTerm);
+    const hiraganaMatch = option.data.name_ja_hiragana
+      .toLowerCase()
+      .includes(searchTerm);
+    return labelMatch || nameEnMatch || hiraganaMatch;
+  };
+
+  // 国選択時のハンドラー
+  const handleCountryChange = (option: SingleValue<CountryOption>) => {
+    setSelectedCountry(option);
+    setCountry(option ? option.value : "");
+  };
+
+  // IME入力中のEnterキーを無視するハンドラー
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // IME変換中（isComposing=true）の場合、react-selectのEnter処理を無効化
+    if (event.key === "Enter" && (event.nativeEvent as any).isComposing) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
   const handleAddPlace = () => {
@@ -119,28 +179,66 @@ export default function TravelPlanPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
+                id="country-label"
                 className="block mb-1 font-semibold text-gray-700"
-                htmlFor="country"
+                onClick={() => selectRef.current?.focus()}
               >
                 国名
               </label>
-              <select
+              <Select
+                ref={selectRef}
                 id="country"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                instanceId="country-select"
+                value={selectedCountry}
+                onChange={handleCountryChange}
                 onBlur={() =>
                   setTouched((prev) => ({ ...prev, country: true }))
                 }
-                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
-                required
-              >
-                <option value="">選択してください</option>
-                {countries.map((c) => (
-                  <option key={c.id} value={c.name_ja}>
-                    {c.name_ja}
-                  </option>
-                ))}
-              </select>
+                onKeyDown={handleKeyDown}
+                options={countryOptions}
+                filterOption={customFilterOption}
+                placeholder="国名を入力または選択してください"
+                noOptionsMessage={() => "該当する国が見つかりません"}
+                isClearable
+                blurInputOnSelect={false}
+                openMenuOnFocus={true}
+                aria-labelledby="country-label"
+                className="react-select-container"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused
+                      ? "#93c5fd"
+                      : "#d1d5db",
+                    boxShadow: state.isFocused
+                      ? "0 0 0 2px rgba(147, 197, 253, 0.5)"
+                      : "none",
+                    "&:hover": {
+                      borderColor: "#93c5fd",
+                    },
+                    borderRadius: "0.5rem",
+                    padding: "0.125rem",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    borderRadius: "0.5rem",
+                    marginTop: "0.25rem",
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? "#dbeafe"
+                      : state.isSelected
+                      ? "#3b82f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#1f2937",
+                    "&:active": {
+                      backgroundColor: "#3b82f6",
+                    },
+                  }),
+                }}
+              />
               {touched.country && !country && (
                 <p className="text-red-500 text-sm mt-1">国名は必須です</p>
               )}
