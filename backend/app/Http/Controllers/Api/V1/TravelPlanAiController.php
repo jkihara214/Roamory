@@ -28,7 +28,7 @@ class TravelPlanAiController extends Controller
         }
 
         // Gemini APIのエンドポイントとAPIキー（.envにGEMINI_API_URL, GEMINI_API_KEYを設定してください。URLはデフォルト値あり）
-        $apiUrl = env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite-001:generateContent');
+        $apiUrl = env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent');
         $apiKey = env('GEMINI_API_KEY', 'YOUR_DUMMY_API_KEY');
 
         // AIへのプロンプト生成
