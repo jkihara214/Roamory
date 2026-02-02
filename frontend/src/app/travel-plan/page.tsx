@@ -110,7 +110,7 @@ export default function TravelPlanPage() {
   // IME入力中のEnterキーを無視するハンドラー
   const handleKeyDown = (event: React.KeyboardEvent) => {
     // IME変換中（isComposing=true）の場合、react-selectのEnter処理を無効化
-    if (event.key === "Enter" && (event.nativeEvent as any).isComposing) {
+    if (event.key === "Enter" && event.nativeEvent.isComposing) {
       event.preventDefault();
       event.stopPropagation();
     }
