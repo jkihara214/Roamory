@@ -28,7 +28,7 @@ class TravelPlanAiController extends Controller
         }
 
         // Gemini APIのエンドポイントとAPIキー（.envにGEMINI_API_URL, GEMINI_API_KEYを設定してください。URLはデフォルト値あり）
-        $apiUrl = env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash-lite-001:generateContent');
+        $apiUrl = env('GEMINI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent');
         $apiKey = env('GEMINI_API_KEY', 'YOUR_DUMMY_API_KEY');
 
         // AIへのプロンプト生成
@@ -103,8 +103,11 @@ class TravelPlanAiController extends Controller
 
 ## 条件
 - **国**: {$request->country}
-- **期間**: {$request->start_date} 〜 {$request->end_date}
+- **旅行期間**: {$request->start_date}（現地到着日時） 〜 {$request->end_date}（現地出発日時）
 - **予算**: {$request->budget}円
+
+**注意**:
+- 現地到着日時と出発日時を考慮し、実際に観光できる時間帯に合わせてプランを作成してください
 EOT;
 
         $places = $request->must_go_places ?? [];

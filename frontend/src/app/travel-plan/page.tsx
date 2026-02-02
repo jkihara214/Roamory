@@ -1,8 +1,9 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "@/components/Header";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import { ja } from "date-fns/locale";
 import { FaMapMarkedAlt, FaCalendarAlt, FaInfoCircle } from "react-icons/fa";
 import { useAuthStore } from "@/store/auth";
 import { useRouter } from "next/navigation";
@@ -12,6 +13,14 @@ import LoadingModal from "@/components/LoadingModal";
 import ReactMarkdown from "react-markdown";
 import type { HTMLAttributes } from "react";
 import { isAxiosError } from "axios";
+import Select, { SingleValue, SelectInstance } from "react-select";
+
+type CountryOption = {
+  value: string;
+  label: string;
+  name_en: string;
+  name_ja_hiragana: string;
+};
 
 export default function TravelPlanPage() {
   const [country, setCountry] = useState("");
@@ -23,10 +32,14 @@ export default function TravelPlanPage() {
   const [placeInput, setPlaceInput] = useState("");
   const [places, setPlaces] = useState<string[]>([]);
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
-  const [countries, setCountries] = useState<
-    { id: number; name_ja: string; name_en: string; code: string }[]
-  >([]);
+  const [countryOptions, setCountryOptions] = useState<CountryOption[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<CountryOption | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
+
+  // react-selectのrefを作成（labelクリック時にフォーカスするため）
+  const selectRef = useRef<SelectInstance<CountryOption>>(null);
 
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const isAuthLoading = useAuthStore((s) => s.isAuthLoading);
@@ -40,8 +53,27 @@ export default function TravelPlanPage() {
 
   useEffect(() => {
     getCountries()
-      .then((res) => setCountries(res.data))
-      .catch(() => setCountries([]));
+      .then((res) => {
+        // react-selectのオプション形式に変換
+        const options: CountryOption[] = res.data.map(
+          (c: {
+            id: number;
+            name_ja: string;
+            name_en: string;
+            name_ja_hiragana: string;
+            code: string;
+          }) => ({
+            value: c.name_ja,
+            label: c.name_ja,
+            name_en: c.name_en,
+            name_ja_hiragana: c.name_ja_hiragana || "",
+          })
+        );
+        setCountryOptions(options);
+      })
+      .catch(() => {
+        setCountryOptions([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -53,6 +85,35 @@ export default function TravelPlanPage() {
   const formatBudget = (value: string) => {
     const num = value.replace(/[^0-9]/g, "");
     return num ? parseInt(num, 10).toLocaleString() : "";
+  };
+
+  // カスタムフィルター関数: 日本語名、英語名、ひらがなの全てで検索可能
+  const customFilterOption = (
+    option: { data: CountryOption },
+    inputValue: string
+  ) => {
+    const searchTerm = inputValue.toLowerCase();
+    const labelMatch = option.data.label.toLowerCase().includes(searchTerm);
+    const nameEnMatch = option.data.name_en.toLowerCase().includes(searchTerm);
+    const hiraganaMatch = option.data.name_ja_hiragana
+      .toLowerCase()
+      .includes(searchTerm);
+    return labelMatch || nameEnMatch || hiraganaMatch;
+  };
+
+  // 国選択時のハンドラー
+  const handleCountryChange = (option: SingleValue<CountryOption>) => {
+    setSelectedCountry(option);
+    setCountry(option ? option.value : "");
+  };
+
+  // IME入力中のEnterキーを無視するハンドラー
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    // IME変換中（isComposing=true）の場合、react-selectのEnter処理を無効化
+    if (event.key === "Enter" && (event.nativeEvent as any).isComposing) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
   };
 
   const handleAddPlace = () => {
@@ -71,10 +132,21 @@ export default function TravelPlanPage() {
     setLoading(true);
     setError(null);
     try {
+      const formatDateTime = (date: Date | null): string => {
+        if (!date) return "";
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        const hours = String(date.getHours()).padStart(2, "0");
+        const minutes = String(date.getMinutes()).padStart(2, "0");
+        const seconds = String(date.getSeconds()).padStart(2, "0");
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      };
+
       const res = await generateTravelPlan({
         country,
-        start_date: startDate?.toISOString().slice(0, 10) ?? "",
-        end_date: endDate?.toISOString().slice(0, 10) ?? "",
+        start_date: formatDateTime(startDate),
+        end_date: formatDateTime(endDate),
         budget,
         must_go_places: places.length > 0 ? places : undefined,
       });
@@ -107,28 +179,66 @@ export default function TravelPlanPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
+                id="country-label"
                 className="block mb-1 font-semibold text-gray-700"
-                htmlFor="country"
+                onClick={() => selectRef.current?.focus()}
               >
                 国名
               </label>
-              <select
+              <Select
+                ref={selectRef}
                 id="country"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
+                instanceId="country-select"
+                value={selectedCountry}
+                onChange={handleCountryChange}
                 onBlur={() =>
                   setTouched((prev) => ({ ...prev, country: true }))
                 }
-                className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
-                required
-              >
-                <option value="">選択してください</option>
-                {countries.map((c) => (
-                  <option key={c.id} value={c.name_ja}>
-                    {c.name_ja}
-                  </option>
-                ))}
-              </select>
+                onKeyDown={handleKeyDown}
+                options={countryOptions}
+                filterOption={customFilterOption}
+                placeholder="国名を入力または選択してください"
+                noOptionsMessage={() => "該当する国が見つかりません"}
+                isClearable
+                blurInputOnSelect={false}
+                openMenuOnFocus={true}
+                aria-labelledby="country-label"
+                className="react-select-container"
+                classNamePrefix="react-select"
+                styles={{
+                  control: (base, state) => ({
+                    ...base,
+                    borderColor: state.isFocused
+                      ? "#93c5fd"
+                      : "#d1d5db",
+                    boxShadow: state.isFocused
+                      ? "0 0 0 2px rgba(147, 197, 253, 0.5)"
+                      : "none",
+                    "&:hover": {
+                      borderColor: "#93c5fd",
+                    },
+                    borderRadius: "0.5rem",
+                    padding: "0.125rem",
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    borderRadius: "0.5rem",
+                    marginTop: "0.25rem",
+                  }),
+                  option: (base, state) => ({
+                    ...base,
+                    backgroundColor: state.isFocused
+                      ? "#dbeafe"
+                      : state.isSelected
+                      ? "#3b82f6"
+                      : "white",
+                    color: state.isSelected ? "white" : "#1f2937",
+                    "&:active": {
+                      backgroundColor: "#3b82f6",
+                    },
+                  }),
+                }}
+              />
               {touched.country && !country && (
                 <p className="text-red-500 text-sm mt-1">国名は必須です</p>
               )}
@@ -139,24 +249,36 @@ export default function TravelPlanPage() {
                   className="block mb-1 font-semibold text-gray-700"
                   htmlFor="startDate"
                 >
-                  出国日
+                  入国日時（旅行先）
                 </label>
                 <DatePicker
                   id="startDate"
                   selected={startDate}
-                  onChange={(date: Date | null) => setStartDate(date)}
+                  onChange={(date: Date | null) => {
+                    setStartDate(date);
+                    // 出国日時が新しい入国日時より前または同じ場合、クリアする
+                    if (date && endDate && endDate <= date) {
+                      setEndDate(null);
+                    }
+                  }}
                   onBlur={() =>
                     setTouched((prev) => ({ ...prev, startDate: true }))
                   }
                   selectsStart
                   startDate={startDate}
                   endDate={endDate}
-                  dateFormat="yyyy-MM-dd"
-                  placeholderText="出国日"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy-MM-dd (EEE) HH:mm"
+                  placeholderText="入国日時（旅行先）"
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
                   autoComplete="off"
+                  locale={ja}
+                  isClearable
+                  todayButton="今日"
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";
@@ -165,7 +287,7 @@ export default function TravelPlanPage() {
                   }}
                 />
                 {touched.startDate && !startDate && (
-                  <p className="text-red-500 text-sm mt-1">出国日は必須です</p>
+                  <p className="text-red-500 text-sm mt-1">入国日時は必須です</p>
                 )}
               </div>
               <div className="flex-1">
@@ -173,12 +295,20 @@ export default function TravelPlanPage() {
                   className="block mb-1 font-semibold text-gray-700"
                   htmlFor="endDate"
                 >
-                  帰国日
+                  出国日時（旅行先）
                 </label>
                 <DatePicker
                   id="endDate"
                   selected={endDate}
-                  onChange={(date: Date | null) => setEndDate(date)}
+                  onChange={(date: Date | null) => {
+                    // 出国日時が入国日時より後の場合のみ設定
+                    if (!date) {
+                      setEndDate(null);
+                    } else if (!startDate || date > startDate) {
+                      setEndDate(date);
+                    }
+                    // それ以外（入国日時以前）の場合は何もしない
+                  }}
                   onBlur={() =>
                     setTouched((prev) => ({ ...prev, endDate: true }))
                   }
@@ -186,12 +316,31 @@ export default function TravelPlanPage() {
                   startDate={startDate}
                   endDate={endDate}
                   minDate={startDate ?? undefined}
-                  dateFormat="yyyy-MM-dd"
-                  placeholderText="帰国日"
+                  showTimeSelect
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="yyyy-MM-dd (EEE) HH:mm"
+                  placeholderText="出国日時（旅行先）"
                   className="w-full border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-300 focus:border-blue-400 transition"
                   wrapperClassName="w-full"
                   required
                   autoComplete="off"
+                  locale={ja}
+                  isClearable
+                  todayButton="今日"
+                  filterTime={(time) => {
+                    if (!startDate) return true;
+                    const selectedDate = endDate || new Date();
+                    // 同じ日付の場合のみ時間をフィルタリング
+                    if (
+                      selectedDate.getFullYear() === startDate.getFullYear() &&
+                      selectedDate.getMonth() === startDate.getMonth() &&
+                      selectedDate.getDate() === startDate.getDate()
+                    ) {
+                      return time.getTime() > startDate.getTime();
+                    }
+                    return true;
+                  }}
                   dayClassName={(date) => {
                     const day = date.getDay();
                     if (day === 0) return "custom-sunday";
@@ -200,7 +349,7 @@ export default function TravelPlanPage() {
                   }}
                 />
                 {touched.endDate && !endDate && (
-                  <p className="text-red-500 text-sm mt-1">帰国日は必須です</p>
+                  <p className="text-red-500 text-sm mt-1">出国日時は必須です</p>
                 )}
               </div>
             </div>
